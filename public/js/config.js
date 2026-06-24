@@ -37,6 +37,7 @@
 
   /** True when hosted online (Render, custom domain) — not local dev */
   window.isPublicDeploy = function isPublicDeploy() {
+    if (window.__PUBLIC_DEPLOY__) return true;
     const h = window.location.hostname;
     if (h === 'localhost' || h === '127.0.0.1') return false;
     if (/^10\./.test(h) || /^192\.168\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h)) {

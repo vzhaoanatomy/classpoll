@@ -225,7 +225,7 @@ function setQrTargetUrl(url) {
 }
 
 /** Build and set the student join link input (source of truth for QR) */
-function updateStudentJoinLink() {
+async function updateStudentJoinLink() {
   const onPublic = window.isPublicDeploy && window.isPublicDeploy();
   const wifiIp = onPublic ? '' : wifiIpInput.value.trim();
 
@@ -233,9 +233,24 @@ function updateStudentJoinLink() {
     localStorage.setItem(WIFI_IP_KEY, wifiIp);
   }
 
-  const joinUrl = onPublic
-    ? buildPublicJoinUrl()
-    : buildJoinUrl(buildBaseOrigin(wifiIp));
+  let joinUrl;
+
+  if (onPublic) {
+    // Server knows the public URL (Render sets RENDER_EXTERNAL_URL)
+    try {
+      const res = await fetch(appUrl(`api/join-url/${sessionId}`));
+      if (res.ok) {
+        const data = await res.json();
+        joinUrl = data.joinUrl;
+        console.log('[teacher.js] Join URL from server:', joinUrl);
+      }
+    } catch (err) {
+      console.warn('[teacher.js] Could not fetch server join URL:', err);
+    }
+    if (!joinUrl) joinUrl = buildPublicJoinUrl();
+  } else {
+    joinUrl = buildJoinUrl(buildBaseOrigin(wifiIp));
+  }
 
   joinLinkEl.value = joinUrl;
   localhostJoinLinkEl.value = buildLocalhostJoinUrl();
@@ -305,7 +320,7 @@ async function updateJoinInfo() {
     return;
   }
 
-  updateStudentJoinLink();
+  await updateStudentJoinLink();
   await regenerateQrCode();
 }
 

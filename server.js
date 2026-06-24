@@ -165,8 +165,11 @@ app.get('/teacher/:sessionId', (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'teacher.html'));
 });
 
-// Teacher dashboard — /teacher.html?session=ABC123 (GitHub Pages / static)
+// Teacher dashboard — /teacher.html?session=ABC123 → redirect to canonical URL
 app.get('/teacher.html', (req, res) => {
+  if (req.query.session) {
+    return res.redirect(301, `/teacher/${req.query.session}`);
+  }
   res.sendFile(path.join(PUBLIC_DIR, 'teacher.html'));
 });
 
@@ -181,7 +184,38 @@ app.get('/join.html', (req, res) => {
 });
 
 // Static assets (css, js, etc.) — after explicit page routes
-app.use(express.static(PUBLIC_DIR));
+app.use(express.static(PUBLIC_DIR, {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.js') || filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  },
+}));
+
+/** Public base URL for join links (Render sets RENDER_EXTERNAL_URL automatically) */
+function getPublicBaseUrl(req) {
+  if (PUBLIC_URL) return PUBLIC_URL.replace(/\/$/, '');
+  return `${req.protocol}://${req.get('host')}`;
+}
+
+function buildJoinUrlForSession(sessionId, req) {
+  return `${getPublicBaseUrl(req)}/join/${sessionId}`;
+}
+
+// API: canonical public join URL for a session (source of truth on Render)
+app.get('/api/join-url/:sessionId', (req, res) => {
+  const { sessionId } = req.params;
+  if (!sessions.has(sessionId)) {
+    return res.status(404).json({ error: 'Session not found' });
+  }
+  const joinUrl = buildJoinUrlForSession(sessionId, req);
+  res.json({
+    joinUrl,
+    sessionId,
+    publicBase: getPublicBaseUrl(req),
+    isPublic: Boolean(PUBLIC_URL) || !['localhost', '127.0.0.1'].includes(req.hostname),
+  });
+});
 
 // API: create a new session
 app.post('/api/sessions', (req, res) => {
