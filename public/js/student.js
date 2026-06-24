@@ -20,7 +20,15 @@ function getSessionId() {
 }
 
 const sessionId = getSessionId();
-const socket = io();
+console.log('[student.js] sessionId:', sessionId);
+
+const socket = typeof io !== 'undefined'
+  ? io()
+  : {
+      emit: () => {},
+      on: () => {},
+      get connected() { return false; },
+    };
 
 // Screen elements
 const joinScreen = document.getElementById('join-screen');
@@ -68,7 +76,7 @@ if (!sessionId) {
 async function checkSession() {
   if (!sessionId) return;
   try {
-    const res = await fetch(`/api/sessions/${sessionId}`);
+    const res = await fetch(appUrl(`api/sessions/${sessionId}`));
     if (!res.ok) throw new Error();
     const session = await res.json();
     currentSession = session;

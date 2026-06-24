@@ -6,20 +6,37 @@ console.log('[teacher.js] loaded');
 
 const WIFI_IP_KEY = 'classpolling-wifi-ip';
 
-// Session code from URL: /teacher/ABC123
+// Session code from ?session=CODE or /teacher/CODE
 function getSessionIdFromPath() {
+  const params = new URLSearchParams(window.location.search);
+  const fromQuery = params.get('session');
+  if (fromQuery && fromQuery.trim()) {
+    return fromQuery.trim().toUpperCase();
+  }
+
   const parts = window.location.pathname.split('/').filter(Boolean);
   const teacherIdx = parts.indexOf('teacher');
   if (teacherIdx >= 0 && parts[teacherIdx + 1]) {
-    return parts[teacherIdx + 1];
+    return parts[teacherIdx + 1].toUpperCase();
   }
-  return parts[parts.length - 1] || '';
+
+  return '';
 }
 
 const sessionId = getSessionIdFromPath();
 console.log('[teacher.js] sessionId:', sessionId);
 
-const socket = io();
+const socket = typeof io !== 'undefined'
+  ? io()
+  : {
+      emit: () => {},
+      on: () => {},
+      get connected() { return false; },
+    };
+
+if (typeof io === 'undefined') {
+  console.warn('[teacher.js] Socket.io not loaded — live polling requires the Node server (local or Render)');
+}
 
 // DOM references
 const sessionCodeEl = document.getElementById('session-code');
@@ -96,7 +113,7 @@ if (endBtn) {
   endBtn.addEventListener('click', () => {
     if (confirm('End this session? All data will be deleted.')) {
       socket.emit('end-session', { sessionId });
-      window.location.href = '/';
+      window.location.href = appUrl('');
     }
   });
 }
@@ -125,11 +142,12 @@ function buildBaseOrigin(wifiIpOverride) {
 }
 
 function buildJoinUrl(baseOrigin) {
-  return `${baseOrigin}/join.html?session=${encodeURIComponent(sessionId)}`;
+  const origin = baseOrigin.replace(/\/$/, '');
+  return `${origin}${appUrl(`join.html?session=${encodeURIComponent(sessionId)}`)}`;
 }
 
 function buildLocalhostJoinUrl() {
-  return `http://localhost:${getPort()}/join.html?session=${encodeURIComponent(sessionId)}`;
+  return `http://localhost:${getPort()}${appUrl(`join.html?session=${encodeURIComponent(sessionId)}`)}`;
 }
 
 function showQrError(message) {
@@ -183,7 +201,7 @@ async function regenerateQrCode() {
   console.log('[teacher.js] Generating QR for:', joinUrl);
 
   try {
-    const res = await fetch('/api/qr', {
+    const res = await fetch(appUrl('api/qr'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: joinUrl }),
@@ -236,7 +254,7 @@ async function initJoinInfo() {
     wifiIpInput.value = savedIp;
   } else {
     try {
-      const res = await fetch('/api/network-info');
+      const res = await fetch(appUrl('api/network-info'));
       if (res.ok) {
         const info = await res.json();
         if (info.detectedIp) {

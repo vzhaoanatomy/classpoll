@@ -91,7 +91,21 @@ Open two browser windows on the teacher laptop:
 
 Try both multiple-choice and text modes, anonymous and named responses.
 
-## Deploy to Render (recommended)
+## Deploy to GitHub Pages (static site)
+
+GitHub Pages hosts the **HTML/CSS/JS only**. Live polling still needs the Node server (local `npm start` or Render).
+
+### Setup
+
+1. On GitHub: repo **Settings → Pages → Build and deployment → Source** → choose **GitHub Actions**
+2. Push to `main` — the workflow in `.github/workflows/deploy-pages.yml` publishes the `public/` folder
+3. Your site will be at: **https://vzhaoanatomy.github.io/classpoll/**
+
+The landing page (`index.html`) loads at that URL. Teacher and student pages use relative paths so CSS and JS work under `/classpoll/`.
+
+**Note:** "Start a New Session" and live updates require the Node backend. For full functionality, deploy to Render (below) or run locally.
+
+## Deploy to Render (recommended for live polls)
 
 This app needs a Node.js server — **GitHub Pages will not work**. Use [Render](https://render.com) (free tier).
 

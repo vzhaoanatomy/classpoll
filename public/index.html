@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ClassPolling — Live Classroom Polls</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <script src="js/config.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="landing">
   <main class="landing-card">
@@ -22,9 +23,9 @@
       errEl.classList.add('hidden');
 
       try {
-        const res = await fetch('/api/sessions', { method: 'POST' });
+        const res = await fetch(appUrl('api/sessions'), { method: 'POST' });
         const data = await res.json();
-        window.location.href = `/teacher/${data.sessionId}`;
+        window.location.href = appUrl(`teacher.html?session=${encodeURIComponent(data.sessionId)}`);
       } catch {
         errEl.textContent = 'Could not create session. Please try again.';
         errEl.classList.remove('hidden');
