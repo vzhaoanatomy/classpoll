@@ -27,7 +27,9 @@ const sessionId = getSessionIdFromPath();
 console.log('[teacher.js] sessionId:', sessionId);
 
 const socket = typeof io !== 'undefined'
-  ? io()
+  ? (window.socketOrigin && window.socketOrigin !== window.location.origin
+      ? io(window.socketOrigin, { transports: ['websocket', 'polling'] })
+      : io())
   : {
       emit: () => {},
       on: () => {},

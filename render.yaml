@@ -1,12 +1,14 @@
-# Render Blueprint — deploy at https://dashboard.render.com/select-repo?type=blueprint
+# Render Blueprint — https://dashboard.render.com/blueprint/new?repo=https://github.com/vzhaoanatomy/classpoll
 services:
   - type: web
     name: classpoll
     runtime: node
     plan: free
+    branch: main
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production

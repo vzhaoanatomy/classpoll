@@ -105,26 +105,36 @@ The landing page (`index.html`) loads at that URL. Teacher and student pages use
 
 **Note:** "Start a New Session" and live updates require the Node backend. For full functionality, deploy to Render (below) or run locally.
 
-## Deploy to Render (recommended for live polls)
+## Deploy to Render (live polling — recommended)
 
-This app needs a Node.js server — **GitHub Pages will not work**. Use [Render](https://render.com) (free tier).
+Use Render to run the full app (Node + Socket.io). Students can join from any network.
 
-### One-time setup
+### Deploy in 3 clicks
 
-1. Push this repo to GitHub: [github.com/vzhaoanatomy/classpoll](https://github.com/vzhaoanatomy/classpoll)
-2. Go to [dashboard.render.com](https://dashboard.render.com) → **New** → **Blueprint**
-3. Connect GitHub and select the **classpoll** repo (Render reads `render.yaml` automatically)
-4. Click **Apply** — Render builds and deploys the app
-5. Open your live URL, e.g. `https://classpoll.onrender.com`
+1. Open **[Render Blueprint deploy →](https://dashboard.render.com/blueprint/new?repo=https://github.com/vzhaoanatomy/classpoll)**
+2. Sign in with GitHub and click **Apply** (Render reads `render.yaml` automatically)
+3. Wait ~3–5 minutes for the first deploy
 
-Students can join from any network using the public join link or QR code — no Wi‑Fi IP override needed when deployed online.
+Your live URL will be:
 
-**Free tier note:** The app sleeps after ~15 min idle; first load after sleep may take 30–60 seconds.
+**`https://classpoll.onrender.com`**
+
+(or similar — check the Render dashboard)
+
+### After deploy
+
+1. Open your Render URL
+2. Click **Start a New Session**
+3. Share the **Student join link** or **QR code** — no Wi‑Fi IP override needed online
+4. Click **Start Poll** and have students respond from their phones
+
+**Free tier:** The app sleeps after ~15 min idle. Open the URL a minute before class so it can wake up.
 
 ### Manual Render setup (without Blueprint)
 
 | Setting | Value |
 |---------|-------|
+| Runtime | Node |
 | Build Command | `npm install` |
 | Start Command | `npm start` |
 | Instance type | Free |

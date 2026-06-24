@@ -13,9 +13,19 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+// Render runs behind a reverse proxy — required for correct URLs and WebSockets
+app.set('trust proxy', 1);
+
+const io = new Server(server, {
+  transports: ['websocket', 'polling'],
+  cors: {
+    origin: true,
+  },
+});
 
 const PORT = process.env.PORT || 3000;
+const PUBLIC_URL = process.env.RENDER_EXTERNAL_URL || null;
 // Optional server-side override: HOST=192.168.1.5 npm start
 const LAN_HOST = process.env.HOST || process.env.LAN_HOST || null;
 
@@ -346,12 +356,17 @@ io.on('connection', (socket) => {
   });
 });
 
-// Listen on all interfaces so phones on the same Wi-Fi can connect
+// Listen on all interfaces (required for Render and local Wi-Fi access)
 server.listen(PORT, '0.0.0.0', () => {
   console.log('ClassPolling running:');
-  console.log(`  Teacher (this computer):  http://localhost:${PORT}`);
-  console.log(`  Students (phones/Wi-Fi):  http://${lanHost}:${PORT}`);
-  if (lanHost === 'localhost') {
-    console.log('  Warning: Could not detect a LAN IP. Set HOST=192.168.x.x if needed.');
+  if (PUBLIC_URL) {
+    console.log(`  Public URL (Render):      ${PUBLIC_URL}`);
+  }
+  console.log(`  Local:                    http://localhost:${PORT}`);
+  if (!PUBLIC_URL) {
+    console.log(`  Wi-Fi (phones):           http://${lanHost}:${PORT}`);
+  }
+  if (lanHost === 'localhost' && !PUBLIC_URL) {
+    console.log('  Tip: Set Wi-Fi IP override on the teacher dashboard for phone access.');
   }
 });
