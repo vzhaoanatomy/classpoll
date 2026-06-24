@@ -145,11 +145,11 @@ function buildBaseOrigin(wifiIpOverride) {
 
 function buildJoinUrl(baseOrigin) {
   const origin = baseOrigin.replace(/\/$/, '');
-  return `${origin}${appUrl(`join.html?session=${encodeURIComponent(sessionId)}`)}`;
+  return `${origin}${appUrl(`join/${encodeURIComponent(sessionId)}`)}`;
 }
 
 function buildLocalhostJoinUrl() {
-  return `http://localhost:${getPort()}${appUrl(`join.html?session=${encodeURIComponent(sessionId)}`)}`;
+  return `http://localhost:${getPort()}${appUrl(`join/${encodeURIComponent(sessionId)}`)}`;
 }
 
 function showQrError(message) {

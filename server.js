@@ -7,6 +7,7 @@
 const express = require('express');
 const http = require('http');
 const os = require('os');
+const fs = require('fs');
 const { Server } = require('socket.io');
 const QRCode = require('qrcode');
 const path = require('path');
@@ -67,6 +68,14 @@ function getSafeLanHost() {
 }
 
 const lanHost = getSafeLanHost();
+const PUBLIC_DIR = path.join(__dirname, 'public');
+
+// Verify static files exist at startup (helps catch deploy issues on Render)
+if (!fs.existsSync(path.join(PUBLIC_DIR, 'teacher.html'))) {
+  console.error('ERROR: public/teacher.html not found at', PUBLIC_DIR);
+} else {
+  console.log('Serving static files from', PUBLIC_DIR);
+}
 
 // In-memory store: sessionId -> session object
 const sessions = new Map();
@@ -139,23 +148,40 @@ function broadcastSession(sessionId) {
   io.to(sessionId).emit('session-update', data);
 }
 
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+
+// Health check for Render
+app.get('/health', (req, res) => {
+  res.json({ ok: true, service: 'classpoll' });
+});
 
 // Landing page
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
-// Teacher dashboard
+// Teacher dashboard — /teacher/ABC123 (preferred on Render)
 app.get('/teacher/:sessionId', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'teacher.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'teacher.html'));
 });
 
-// Student join page
-app.get('/join/:sessionId', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'join.html'));
+// Teacher dashboard — /teacher.html?session=ABC123 (GitHub Pages / static)
+app.get('/teacher.html', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'teacher.html'));
 });
+
+// Student join — /join/ABC123
+app.get('/join/:sessionId', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'join.html'));
+});
+
+// Student join — /join.html?session=ABC123
+app.get('/join.html', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'join.html'));
+});
+
+// Static assets (css, js, etc.) — after explicit page routes
+app.use(express.static(PUBLIC_DIR));
 
 // API: create a new session
 app.post('/api/sessions', (req, res) => {
