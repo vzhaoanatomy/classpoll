@@ -1,0 +1,22 @@
+# Push to main → trigger Render redeploy (fast, one-step deploy)
+name: Deploy to Render
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy hook
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK secret not set — Render Blueprint autoDeploy should still pick up the push."
+            echo "To enable instant deploys: Render dashboard → classpoll → Settings → Deploy Hook → add URL as GitHub secret RENDER_DEPLOY_HOOK"
+            exit 0
+          fi
+          curl -fsS -X POST "$DEPLOY_HOOK"
+          echo "Render deploy triggered."

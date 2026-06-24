@@ -4,10 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ClassPolling — Live Classroom Polls</title>
-  <script src="js/config.js?v=4"></script>
+  <script src="/api/app-config.js"></script>
+  <script src="js/config.js?v=5"></script>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="landing">
+  <div id="deploy-bar" class="deploy-bar">
+    <span id="deploy-version">Live: checking…</span>
+    <div id="deploy-progress" class="deploy-progress hidden">
+      <div id="deploy-progress-fill" class="deploy-progress-fill"></div>
+    </div>
+    <span id="deploy-status-text" class="deploy-status-text"></span>
+    <button id="deploy-check-btn" class="btn btn-small btn-secondary" type="button">Sync latest</button>
+  </div>
   <main class="landing-card">
     <h1>ClassPolling</h1>
     <p class="subtitle">Run live classroom polls. Students join from their phones.</p>
@@ -34,5 +43,6 @@
       }
     });
   </script>
+  <script src="js/deploy-status.js?v=5"></script>
 </body>
 </html>

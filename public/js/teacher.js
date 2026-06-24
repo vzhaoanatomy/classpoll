@@ -235,7 +235,10 @@ async function updateStudentJoinLink() {
 
   let joinUrl;
 
-  if (onPublic) {
+  if (window.__PUBLIC_DEPLOY__ && window.__PUBLIC_BASE__ && sessionId) {
+    joinUrl = `${window.__PUBLIC_BASE__.replace(/\/$/, '')}/join/${encodeURIComponent(sessionId)}`;
+    console.log('[teacher.js] Join URL from server config:', joinUrl);
+  } else if (onPublic) {
     // Server knows the public URL (Render sets RENDER_EXTERNAL_URL)
     try {
       const res = await fetch(appUrl(`api/join-url/${sessionId}`));

@@ -69,6 +69,25 @@ function getSafeLanHost() {
 
 const lanHost = getSafeLanHost();
 const PUBLIC_DIR = path.join(__dirname, 'public');
+const APP_VERSION = (process.env.RENDER_GIT_COMMIT || 'dev').slice(0, 7);
+
+/** Public base URL for join links (Render sets RENDER_EXTERNAL_URL automatically) */
+function getPublicBaseUrl(req) {
+  if (PUBLIC_URL) return PUBLIC_URL.replace(/\/$/, '');
+  return `${req.protocol}://${req.get('host')}`;
+}
+
+function buildJoinUrlForSession(sessionId, req) {
+  return `${getPublicBaseUrl(req)}/join/${sessionId}`;
+}
+
+function isPublicHost(req) {
+  if (PUBLIC_URL) return true;
+  const h = req.hostname;
+  if (h === 'localhost' || h === '127.0.0.1') return false;
+  if (/^10\.|^192\.168\.|^172\.(1[6-9]|2\d|3[01])\./.test(h)) return false;
+  return true;
+}
 
 // Verify static files exist at startup (helps catch deploy issues on Render)
 if (!fs.existsSync(path.join(PUBLIC_DIR, 'teacher.html'))) {
@@ -150,6 +169,29 @@ function broadcastSession(sessionId) {
 
 app.use(express.json());
 
+// Dynamic config — always fresh from server (never stale cached JS)
+app.get('/api/app-config.js', (req, res) => {
+  const isPublic = isPublicHost(req);
+  const publicBase = getPublicBaseUrl(req);
+  res.type('application/javascript');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.send(
+    `window.__APP_VERSION__=${JSON.stringify(APP_VERSION)};` +
+    `window.__PUBLIC_DEPLOY__=${isPublic};` +
+    `window.__PUBLIC_BASE__=${JSON.stringify(publicBase)};` +
+    `if(${isPublic}){try{localStorage.removeItem('classpolling-wifi-ip')}catch(e){}}`
+  );
+});
+
+app.get('/api/version', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    commit: APP_VERSION,
+    publicUrl: getPublicBaseUrl(req),
+    isPublic: isPublicHost(req),
+  });
+});
+
 // Health check for Render
 app.get('/health', (req, res) => {
   res.json({ ok: true, service: 'classpoll' });
@@ -192,17 +234,7 @@ app.use(express.static(PUBLIC_DIR, {
   },
 }));
 
-/** Public base URL for join links (Render sets RENDER_EXTERNAL_URL automatically) */
-function getPublicBaseUrl(req) {
-  if (PUBLIC_URL) return PUBLIC_URL.replace(/\/$/, '');
-  return `${req.protocol}://${req.get('host')}`;
-}
-
-function buildJoinUrlForSession(sessionId, req) {
-  return `${getPublicBaseUrl(req)}/join/${sessionId}`;
-}
-
-// API: canonical public join URL for a session (source of truth on Render)
+// API routes (registered after static so /api/* is never shadowed by files)
 app.get('/api/join-url/:sessionId', (req, res) => {
   const { sessionId } = req.params;
   if (!sessions.has(sessionId)) {
@@ -213,7 +245,7 @@ app.get('/api/join-url/:sessionId', (req, res) => {
     joinUrl,
     sessionId,
     publicBase: getPublicBaseUrl(req),
-    isPublic: Boolean(PUBLIC_URL) || !['localhost', '127.0.0.1'].includes(req.hostname),
+    isPublic: isPublicHost(req),
   });
 });
 
@@ -419,6 +451,7 @@ io.on('connection', (socket) => {
 // Listen on all interfaces (required for Render and local Wi-Fi access)
 server.listen(PORT, '0.0.0.0', () => {
   console.log('ClassPolling running:');
+  console.log(`  Version:                  ${APP_VERSION}`);
   if (PUBLIC_URL) {
     console.log(`  Public URL (Render):      ${PUBLIC_URL}`);
   }

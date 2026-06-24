@@ -4,25 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Dashboard — ClassPolling</title>
-  <script>
-    /* Runs before anything else — force public mode on Render, clear stale local Wi-Fi IP */
-    (function () {
-      var h = location.hostname;
-      var isLocal = h === 'localhost' || h === '127.0.0.1' ||
-        /^10\./.test(h) || /^192\.168\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
-      if (!isLocal) {
-        window.__PUBLIC_DEPLOY__ = true;
-        try { localStorage.removeItem('classpolling-wifi-ip'); } catch (e) {}
-      }
-    })();
-  </script>
-  <script src="js/config.js?v=4"></script>
-  <script src="js/socket-loader.js?v=4"></script>
+  <script src="/api/app-config.js"></script>
+  <script src="js/config.js?v=5"></script>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/teacher.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body class="teacher-body">
+  <div id="deploy-bar" class="deploy-bar">
+    <span id="deploy-version">Live: checking…</span>
+    <div id="deploy-progress" class="deploy-progress hidden">
+      <div id="deploy-progress-fill" class="deploy-progress-fill"></div>
+    </div>
+    <span id="deploy-status-text" class="deploy-status-text"></span>
+    <button id="deploy-check-btn" class="btn btn-small btn-secondary" type="button">Sync latest</button>
+  </div>
   <header class="teacher-header">
     <div class="header-left">
       <h1>ClassPolling</h1>
@@ -141,8 +137,8 @@
     </section>
   </main>
 
-  <script src="js/config.js?v=4"></script>
-  <script src="js/socket-loader.js?v=4"></script>
-  <script src="js/teacher.js?v=4"></script>
+  <script src="js/socket-loader.js?v=5"></script>
+  <script src="js/deploy-status.js?v=5"></script>
+  <script src="js/teacher.js?v=5"></script>
 </body>
 </html>

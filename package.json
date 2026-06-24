@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "deploy": "git push origin main && echo '\\n✓ Pushed to GitHub. Render redeploys in ~3 min. Open your site and click Sync latest.'"
   },
   "dependencies": {
     "express": "^4.21.2",
