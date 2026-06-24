@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mystery Case Study Generator — Honors Anatomy &amp; Physiology</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --panel: #ffffff;
+      --ink: #2b2a28;
+      --muted: #6f6a63;
+      --line: #e3ddd1;
+      --accent: #3f6d8e;      /* slate blue */
+      --accent-dark: #2f5470;
+      --accent-soft: #e8f0f6;
+      --teacher: #8a5a44;      /* warm clay for teacher-only */
+      --teacher-soft: #f6ece6;
+      --gold: #b08a3e;
+      --good: #4b7a52;
+      --bad: #b4452f;
+      --bad-soft: #fbeae5;
+      --radius: 14px;
+      --shadow: 0 2px 10px rgba(60, 50, 30, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+      line-height: 1.55;
+      font-size: 17px;
+    }
+    button, input, select, textarea { font-family: inherit; font-size: inherit; }
+
+    .app { max-width: 1100px; margin: 0 auto; padding: 0 20px 80px; }
+
+    /* Header */
+    .site-header {
+      text-align: center;
+      padding: 30px 16px 18px;
+    }
+    .site-header h1 {
+      margin: 0;
+      font-size: 2.1rem;
+      letter-spacing: 0.3px;
+      color: var(--accent-dark);
+    }
+    .site-header .subtitle { margin: 6px 0 0; color: var(--muted); font-size: 1.05rem; }
+    .disclaimer {
+      margin: 16px auto 0;
+      max-width: 760px;
+      background: #fff7e6;
+      border: 1px solid #ecd9a6;
+      color: #6e561f;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+    }
+
+    /* Cards & sections */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 24px;
+      margin: 18px 0;
+    }
+    .card h2 { margin: 0 0 4px; color: var(--accent-dark); font-size: 1.4rem; }
+    .card h3 { margin: 18px 0 6px; color: var(--accent); font-size: 1.12rem; }
+    .card h4 { margin: 14px 0 4px; color: var(--ink); font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .eyebrow { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 0.92rem; color: var(--muted); font-weight: 600; }
+    .field input, .field select {
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--ink);
+    }
+    .field input:focus, .field select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+    /* Buttons */
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      padding: 9px 15px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: transform .04s ease, background .15s ease, border-color .15s ease;
+    }
+    .btn:hover { background: #faf7f1; }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-ghost { background: transparent; }
+    .btn-lg { padding: 14px 26px; font-size: 1.15rem; border-radius: 12px; }
+    .btn-small { padding: 5px 12px; font-size: 0.85rem; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .btn-row .spacer { flex: 1; }
+
+    /* Tabs */
+    .tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 2px solid var(--line); margin: 26px 0 4px; }
+    .tab {
+      border: none; background: transparent; cursor: pointer;
+      padding: 12px 18px; font-size: 1.02rem; color: var(--muted);
+      border-bottom: 3px solid transparent; margin-bottom: -2px; border-radius: 8px 8px 0 0;
+    }
+    .tab:hover { color: var(--accent); background: var(--accent-soft); }
+    .tab.active { color: var(--accent-dark); border-bottom-color: var(--accent); font-weight: 700; }
+
+    /* Student vs teacher visual separation */
+    .student-scope { }
+    .teacher-scope .card { border-left: 5px solid var(--teacher); background: linear-gradient(0deg, #fffdfb, #fffdfb); }
+    .teacher-badge { display: inline-block; background: var(--teacher-soft); color: var(--teacher); border: 1px solid #e6cdbf; padding: 2px 9px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; }
+
+    .meta-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+    .pill { background: var(--accent-soft); color: var(--accent-dark); border-radius: 20px; padding: 4px 12px; font-size: 0.85rem; font-weight: 600; }
+    .pill.teacher { background: var(--teacher-soft); color: var(--teacher); }
+
+    ul.clean { margin: 6px 0; padding-left: 22px; }
+    ul.clean li { margin: 4px 0; }
+    .questions { background: var(--accent-soft); border-radius: 10px; padding: 12px 16px; margin-top: 14px; }
+    .questions .eyebrow { color: var(--accent-dark); }
+    .questions ol { margin: 6px 0 0; padding-left: 22px; }
+    .questions ol li { margin: 5px 0; }
+
+    /* Lab table */
+    table.labs { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    table.labs th, table.labs td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 0.96rem; }
+    table.labs th { color: var(--muted); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    tr.abnormal td { background: var(--bad-soft); }
+    .flag { color: var(--bad); font-weight: 700; }
+    .flag.normal { color: var(--good); font-weight: 600; }
+
+    .distractor { background: #fff4ec; border: 1px dashed #e3b58f; border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: 0.96rem; }
+    .vocab dt { font-weight: 700; color: var(--accent-dark); margin-top: 8px; }
+    .vocab dd { margin: 2px 0 0; color: var(--ink); }
+
+    .reveal-locked { text-align: center; padding: 24px; color: var(--muted); }
+
+    /* Reveal mode */
+    .reveal-wrap { }
+    .progress-track { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 8px 0 18px; }
+    .progress-step { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; }
+    .progress-step.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+    .progress-step.done { background: var(--accent-soft); color: var(--accent-dark); border-color: var(--accent-soft); }
+    .reveal-card { min-height: 320px; }
+    .reveal-card h2 { font-size: 1.9rem; }
+    .reveal-card .reveal-body { font-size: 1.18rem; }
+    .pause-box { background: #fff7e6; border: 2px solid #ecd9a6; border-radius: 12px; padding: 14px 18px; margin: 16px 0; }
+    .pause-box .eyebrow { color: var(--gold); }
+    .hypothesis-prompt { background: var(--accent-soft); border-radius: 12px; padding: 14px 18px; margin: 12px 0; }
+    .reveal-nav { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
+    .teacher-notes { margin-top: 16px; border-top: 2px dashed var(--teacher); padding-top: 12px; }
+
+    /* Collaboration: editable tables */
+    .editable-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .editable-table th, .editable-table td { border: 1px solid var(--line); padding: 6px; vertical-align: top; }
+    .editable-table th { background: var(--accent-soft); color: var(--accent-dark); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .editable-table textarea { width: 100%; border: none; resize: vertical; min-height: 40px; background: transparent; color: var(--ink); }
+    .editable-table textarea:focus { outline: 1px solid var(--accent-soft); }
+    .editable-table select { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 4px; }
+    .row-x { color: var(--bad); cursor: pointer; border: none; background: transparent; font-size: 1.1rem; }
+    .role-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 8px 0; background: #fff; }
+    .role-card strong { color: var(--accent-dark); }
+
+    .saved-list { list-style: none; padding: 0; margin: 8px 0 0; }
+    .saved-list li { display: flex; align-items: center; gap: 10px; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); }
+
+    .small { font-size: 0.88rem; color: var(--muted); }
+    .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--accent-dark); color: #fff; padding: 10px 18px; border-radius: 24px; box-shadow: var(--shadow); z-index: 50; }
+
+    @media (max-width: 640px) {
+      .form-grid { grid-template-columns: 1fr; }
+      body { font-size: 16px; }
+    }
+
+    /* Print */
+    @media print {
+      body { background: #fff; }
+      .no-print { display: none !important; }
+      .app { max-width: none; padding: 0; }
+      .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; page-break-inside: avoid; }
+      .tabs, .site-header .disclaimer, .deploy-bar { display: none; }
+      .teacher-scope .card { border-left: 4px solid #999; }
+      table.labs th, table.labs td { border-color: #bbb; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useRef } = React;
+
+/* ============================================================
+   STANDARD QUESTION SETS & SHARED CONTENT (per spec)
+   ============================================================ */
+const STUDENT_QUESTIONS = {
+  I: [
+    "What symptoms stand out?",
+    "What body systems might be involved?",
+    "What information do you need next?",
+    "What are 2–3 possible explanations?",
+  ],
+  II: [
+    "Which clues support your original hypothesis?",
+    "Which clues challenge your original hypothesis?",
+    "What diagnosis seems more likely now?",
+    "What evidence do you still need?",
+  ],
+  III: [
+    "Which values are abnormal?",
+    "What do the abnormal values suggest?",
+    "What body system or process appears disrupted?",
+    "What diagnosis is now most likely, and why?",
+  ],
+  IV: [
+    "What normal function is being disrupted?",
+    "How does this disruption explain the patient’s symptoms?",
+    "What would happen if the condition worsened?",
+    "What evidence now points toward one diagnosis?",
+  ],
+  V: [
+    "Defend the diagnosis using at least three pieces of evidence.",
+    "Explain the mechanism in your own words.",
+    "Which clue was most important?",
+    "What misconception could lead someone to the wrong diagnosis?",
+  ],
+};
+
+const DISCUSSION_PROMPTS = [
+  "What evidence supports your diagnosis?",
+  "What evidence does not fit?",
+  "What information changed your mind?",
+  "What mechanism explains the symptoms?",
+  "What would you test next?",
+];
+
+const ROLES_SMALL_GROUP = [
+  { name: "Lead Clinician", desc: "keeps the group focused on the main question" },
+  { name: "Evidence Tracker", desc: "records clues and evidence" },
+  { name: "Skeptic", desc: "challenges weak reasoning" },
+  { name: "Mechanism Expert", desc: "connects symptoms to anatomy and physiology" },
+];
+const ROLES_WHOLE_CLASS = [
+  { name: "Symptom Spotters", desc: "call out and list the patient’s symptoms" },
+  { name: "Data Analysts", desc: "interpret vitals and lab values against normal ranges" },
+  { name: "Mechanism Builders", desc: "explain the underlying physiology" },
+  { name: "Diagnosis Defenders", desc: "argue for the best-supported diagnosis using evidence" },
+];
+
+const SENTENCE_STARTERS = [
+  "The evidence that supports this is…",
+  "This clue suggests… because…",
+  "I changed my mind when… because…",
+  "This does not fit because…",
+  "The mechanism behind this symptom is…",
+];
+
+const BODY_SYSTEMS = [
+  "Cardiovascular", "Respiratory", "Digestive", "Nervous", "Endocrine",
+  "Muscular", "Skeletal", "Integumentary", "Immune/Lymphatic", "Urinary",
+  "Reproductive", "Multiple systems",
+];
+
+/* ============================================================
+   CONDITION CONTENT LIBRARY
+   Hand-authored, medically realistic specs. Keyed by normalized
+   name / aliases so output is specific, not generic.
+   ============================================================ */
+const CONDITIONS = [
+  {
+    aliases: ["cyanide", "cyanide poisoning", "cyanide toxicity"],
+    condition: "Cyanide poisoning",
+    system: "Multiple systems",
+    learningGoals: [
+      "Explain how cells use the electron transport chain to make ATP.",
+      "Predict what happens to a patient when aerobic cellular respiration is blocked.",
+      "Interpret why oxygen saturation can look normal while tissues are starving for usable energy.",
+      "Connect lactic acidosis to the switch from aerobic to anaerobic metabolism.",
+    ],
+    patient: { age: "17-year-old", background: "high school student with no chronic illnesses", setting: "brought to the ER after a fire in a basement apartment where furniture and synthetic carpet were burning" },
+    chiefComplaint: "Sudden severe headache, dizziness, and trouble breathing despite getting out of the smoke quickly.",
+    symptoms: [
+      "Pounding headache and confusion",
+      "Rapid, deep breathing then later slow breathing",
+      "Racing heart, then weakness and near-fainting",
+      "Nausea",
+      "Skin looks flushed, almost cherry-red, rather than blue",
+    ],
+    curiosity: [
+      "The patient is breathing fast and was given oxygen, yet still feels like they are suffocating.",
+      "Unlike most people pulled from smoke, the lips and skin are not turning blue.",
+    ],
+    vitals: [
+      { label: "Heart rate", value: "128 bpm", normal: "60–100 bpm", abnormal: true },
+      { label: "Respiratory rate", value: "30 breaths/min", normal: "12–20 breaths/min", abnormal: true },
+      { label: "Blood pressure", value: "92/58 mmHg", normal: "≈120/80 mmHg", abnormal: true },
+      { label: "Temperature", value: "37.1 °C", normal: "36.5–37.5 °C", abnormal: false },
+      { label: "Oxygen saturation (SpO₂)", value: "98%", normal: "95–100%", abnormal: false },
+    ],
+    history: [
+      "No history of asthma, heart disease, or diabetes.",
+      "Was inside a smoky basement for several minutes before escaping.",
+      "Furniture, foam cushions, and synthetic carpet were burning.",
+    ],
+    exposures: [
+      "Smoke inhalation from burning synthetic materials (which can release cyanide gas).",
+      "No alcohol or recreational drugs reported.",
+    ],
+    exam: [
+      "Awake but confused and anxious.",
+      "Skin and mucous membranes appear bright, cherry-red.",
+      "Heart racing; breathing fast and labored.",
+      "No wheezing; lungs sound clear.",
+    ],
+    distractor: "Because the patient came from a fire, it is tempting to assume the only problem is low oxygen from smoke. But the normal SpO₂ and clear lungs argue against simple suffocation.",
+    labs: [
+      { label: "SpO₂ (pulse oximetry)", value: "98%", normal: "95–100%", abnormal: false },
+      { label: "Arterial blood pH", value: "7.18", normal: "7.35–7.45", abnormal: true },
+      { label: "Serum lactate", value: "14 mmol/L", normal: "0.5–2.2 mmol/L", abnormal: true },
+      { label: "Venous oxygen saturation (SvO₂)", value: "88% (elevated)", normal: "60–75%", abnormal: true },
+      { label: "Bicarbonate (HCO₃⁻)", value: "12 mEq/L", normal: "22–28 mEq/L", abnormal: true },
+    ],
+    mechanism: {
+      focus: "Mitochondria and the electron transport chain (aerobic cellular respiration).",
+      explanation: "Cyanide binds to an enzyme called cytochrome c oxidase, the last protein complex (Complex IV) in the electron transport chain on the inner mitochondrial membrane. Normally this complex passes electrons to oxygen, the final electron acceptor, allowing the chain to pump protons and make ATP. When cyanide blocks Complex IV, oxygen can no longer accept electrons, so the whole chain backs up and oxidative phosphorylation stops. The blood is still loaded with oxygen (that is why SpO₂ looks normal and the skin is cherry-red), but the cells cannot USE it. Starved for ATP, cells switch to anaerobic glycolysis, which produces lactic acid. The buildup of lactate drives the blood pH down (metabolic acidosis), and the brain and heart, which need huge amounts of ATP, fail first — explaining the headache, confusion, racing heart, and low blood pressure.",
+      vocab: [
+        { term: "Electron transport chain", def: "A series of proteins in the mitochondria that pass electrons to make most of the cell's ATP." },
+        { term: "Cytochrome c oxidase", def: "The enzyme (Complex IV) that hands electrons to oxygen; cyanide blocks it." },
+        { term: "Oxidative phosphorylation", def: "The process that uses oxygen and the electron transport chain to make ATP." },
+        { term: "Anaerobic glycolysis", def: "Making a small amount of ATP without oxygen; produces lactic acid." },
+        { term: "Lactic acidosis", def: "A drop in blood pH caused by too much lactic acid." },
+        { term: "SpO₂ vs SvO₂", def: "Oxygen carried in arteries vs oxygen left in veins; here veins stay full because tissue cannot extract oxygen." },
+      ],
+      task: "Draw the electron transport chain. Mark where cyanide binds, then use arrows to trace why ATP production stops and lactate rises. Predict one symptom for each affected organ.",
+    },
+    diagnosis: "Cyanide poisoning (from smoke inhalation), causing histotoxic hypoxia — the cells cannot use available oxygen.",
+    clueLinks: [
+      "Cherry-red skin + normal SpO₂: oxygen is in the blood but unused — points away from simple suffocation.",
+      "Came from a fire with burning synthetic materials: a classic source of cyanide gas.",
+      "Severe lactic acidosis with high venous O₂: tissues are not extracting oxygen, the signature of a blocked electron transport chain.",
+      "Brain and heart symptoms first: these high-ATP organs fail when oxidative phosphorylation stops.",
+    ],
+    alternatives: [
+      { dx: "Simple smoke inhalation / hypoxia", why: "Would lower SpO₂ and turn skin bluish; here SpO₂ is normal and skin is cherry-red." },
+      { dx: "Carbon monoxide poisoning alone", why: "Also possible in fires and also causes cherry-red skin, but the extreme lactic acidosis with high venous oxygen is more specific for cyanide blocking cellular respiration. (In real fires both can occur together.)" },
+    ],
+    management: [
+      "Remove from exposure and give 100% oxygen.",
+      "Antidotes such as hydroxocobalamin bind cyanide so it can be excreted (education only).",
+      "Support breathing and circulation; correct the acidosis.",
+    ],
+    misconceptions: [
+      { think: "If oxygen saturation is normal, the patient must be fine.", address: "SpO₂ only measures oxygen carried in the blood, not whether cells can use it. Tie back to the role of Complex IV." },
+      { think: "Cherry-red skin means good oxygenation.", address: "It means oxygen is staying in the blood unused, a warning sign, not a healthy sign." },
+      { think: "All fire victims just need more oxygen.", address: "If cells cannot accept oxygen, extra oxygen alone will not restart ATP production." },
+    ],
+  },
+  {
+    aliases: ["asthma", "asthma attack", "bronchial asthma"],
+    condition: "Asthma",
+    system: "Respiratory",
+    learningGoals: [
+      "Describe how the bronchioles control airflow.",
+      "Explain how inflammation and bronchoconstriction reduce ventilation.",
+      "Interpret spirometry and oxygen data in obstructive disease.",
+    ],
+    patient: { age: "15-year-old", background: "student who runs track, recently got a new cat", setting: "school nurse's office during a cold, pollen-heavy spring morning" },
+    chiefComplaint: "Episodes of wheezing, chest tightness, and shortness of breath that get worse with exercise and at night.",
+    symptoms: [
+      "Wheezing, especially when breathing out",
+      "Chest tightness",
+      "Dry cough that is worse at night",
+      "Shortness of breath during track practice",
+    ],
+    curiosity: [
+      "Symptoms come and go and are worse around the new cat and during pollen season.",
+      "Breathing OUT feels harder than breathing in.",
+    ],
+    vitals: [
+      { label: "Heart rate", value: "104 bpm", normal: "60–100 bpm", abnormal: true },
+      { label: "Respiratory rate", value: "26 breaths/min", normal: "12–20 breaths/min", abnormal: true },
+      { label: "Oxygen saturation", value: "93%", normal: "95–100%", abnormal: true },
+      { label: "Temperature", value: "37.0 °C", normal: "36.5–37.5 °C", abnormal: false },
+    ],
+    history: [
+      "Eczema as a young child; seasonal allergies.",
+      "Mother has hay fever.",
+      "New pet cat at home two weeks ago.",
+    ],
+    exposures: ["Cat dander and spring pollen.", "Cold morning air during exercise."],
+    exam: [
+      "Audible wheeze; prolonged expiration.",
+      "Using neck muscles to breathe.",
+      "Speaking in short phrases.",
+    ],
+    distractor: "A recent mild runny nose might suggest a simple chest infection, but there is no fever and lungs are not crackly — pointing to airway narrowing rather than infection.",
+    labs: [
+      { label: "Oxygen saturation", value: "93%", normal: "95–100%", abnormal: true },
+      { label: "Peak expiratory flow", value: "60% of personal best", normal: "≥80% of personal best", abnormal: true },
+      { label: "Spirometry FEV₁/FVC", value: "0.62, improves after bronchodilator", normal: "≥0.75–0.80", abnormal: true },
+    ],
+    mechanism: {
+      focus: "Bronchioles, smooth muscle, and the immune response in the lower airways.",
+      explanation: "In asthma, the airways are chronically inflamed and overreactive. When triggered (allergens, cold air, exercise), the smooth muscle around the bronchioles contracts (bronchoconstriction), the lining swells, and extra mucus is produced. The airways narrow, especially during exhalation when they naturally get smaller, which is why breathing out is hard and wheezing occurs. Narrowed airways trap air and reduce gas exchange, lowering oxygen saturation. Spirometry shows a reduced FEV₁/FVC that improves after a bronchodilator, confirming the obstruction is reversible.",
+      vocab: [
+        { term: "Bronchioles", def: "Small airways in the lungs whose diameter controls airflow." },
+        { term: "Bronchoconstriction", def: "Tightening of the muscle around the airways, narrowing them." },
+        { term: "FEV₁/FVC", def: "The fraction of air you can blow out in the first second; low values mean obstruction." },
+        { term: "Bronchodilator", def: "A medicine that relaxes airway muscle and widens the airways." },
+        { term: "Reversible obstruction", def: "Airway narrowing that improves with treatment, a hallmark of asthma." },
+      ],
+      task: "Sketch a normal bronchiole and an asthmatic bronchiole side by side. Label the muscle, lining, and mucus, and explain why exhaling is harder than inhaling.",
+    },
+    diagnosis: "Asthma — reversible airway obstruction from inflammation and bronchoconstriction.",
+    clueLinks: [
+      "Wheezing and hard exhalation point to narrowed lower airways.",
+      "Triggers (cat, pollen, exercise, cold air) and allergy history fit an overreactive immune airway response.",
+      "Low peak flow and reduced FEV₁/FVC that improves after a bronchodilator confirm reversible obstruction.",
+    ],
+    alternatives: [
+      { dx: "Pneumonia / chest infection", why: "No fever, no crackles, and symptoms are episodic and reversible." },
+      { dx: "Anxiety / panic breathing", why: "Would not produce wheeze or an abnormal, bronchodilator-responsive spirometry result." },
+    ],
+    management: [
+      "Avoid triggers when possible.",
+      "Quick-relief inhaler (bronchodilator) for attacks; controller medicine for prevention (education only).",
+      "An asthma action plan and follow-up.",
+    ],
+    misconceptions: [
+      { think: "Trouble breathing in asthma is mostly about breathing IN.", address: "Obstruction is worst on exhalation; that is why air gets trapped and wheeze is expiratory." },
+      { think: "Normal-ish oxygen means it is not serious.", address: "Oxygen can stay near normal early; rising effort and falling peak flow show real obstruction." },
+      { think: "Asthma is just being out of shape.", address: "Spirometry shows measurable, reversible obstruction, not poor fitness." },
+    ],
+  },
+  {
+    aliases: ["myocardial infarction", "heart attack", "mi", "stemi", "acute mi"],
+    condition: "Myocardial infarction",
+    system: "Cardiovascular",
+    learningGoals: [
+      "Trace blood flow through the coronary arteries to heart muscle.",
+      "Explain how blocked blood flow causes ischemia and tissue death.",
+      "Interpret EKG changes and cardiac enzyme markers.",
+    ],
+    patient: { age: "58-year-old", background: "adult with high blood pressure and high cholesterol who smokes", setting: "emergency department after symptoms began while shoveling snow" },
+    chiefComplaint: "Crushing chest pain spreading to the left arm and jaw, with sweating and nausea.",
+    symptoms: [
+      "Heavy, crushing chest pressure",
+      "Pain radiating to the left arm and jaw",
+      "Cold sweat and nausea",
+      "Shortness of breath",
+    ],
+    curiosity: [
+      "The pain started during heavy physical exertion and did not go away with rest.",
+      "The patient looks pale, gray, and frightened.",
+    ],
+    vitals: [
+      { label: "Heart rate", value: "110 bpm", normal: "60–100 bpm", abnormal: true },
+      { label: "Blood pressure", value: "158/96 mmHg", normal: "≈120/80 mmHg", abnormal: true },
+      { label: "Respiratory rate", value: "24 breaths/min", normal: "12–20 breaths/min", abnormal: true },
+      { label: "Oxygen saturation", value: "94%", normal: "95–100%", abnormal: true },
+    ],
+    history: [
+      "High blood pressure and high cholesterol.",
+      "Smokes one pack per day for 30 years.",
+      "Father had a heart attack at 60.",
+    ],
+    exposures: ["Heavy exertion (shoveling snow) in cold weather."],
+    exam: [
+      "Pale, sweaty, clutching chest.",
+      "Heart sounds fast; lungs with faint crackles at the bases.",
+    ],
+    distractor: "The nausea and exertion could suggest heartburn or a muscle strain, but the radiation to arm and jaw plus the EKG and enzymes point to the heart.",
+    labs: [
+      { label: "Troponin I", value: "8.4 ng/mL", normal: "<0.04 ng/mL", abnormal: true },
+      { label: "EKG", value: "ST-segment elevation in leads II, III, aVF", normal: "No ST elevation", abnormal: true },
+      { label: "Oxygen saturation", value: "94%", normal: "95–100%", abnormal: true },
+    ],
+    mechanism: {
+      focus: "Coronary arteries and cardiac muscle (myocardium).",
+      explanation: "The heart muscle gets its own blood supply from the coronary arteries. Years of high cholesterol, high blood pressure, and smoking build fatty plaques (atherosclerosis) inside these arteries. When a plaque ruptures, a blood clot forms and suddenly blocks the artery. The heart muscle downstream is cut off from oxygen and nutrients (ischemia). Without oxygen, those cardiac cells cannot make enough ATP, switch to anaerobic metabolism, and begin to die (infarction). Dying cells leak proteins like troponin into the blood, and the injured region changes the heart's electrical signal, producing ST-elevation on the EKG.",
+      vocab: [
+        { term: "Coronary arteries", def: "Vessels that supply blood to the heart muscle itself." },
+        { term: "Atherosclerosis", def: "Fatty plaque buildup that narrows arteries." },
+        { term: "Ischemia", def: "Reduced blood flow and oxygen to a tissue." },
+        { term: "Infarction", def: "Tissue death from lack of blood supply." },
+        { term: "Troponin", def: "A protein released into the blood when heart muscle is damaged." },
+      ],
+      task: "Diagram a coronary artery with a plaque and clot. Show which region of muscle loses blood flow and connect it to the symptoms and the troponin rise.",
+    },
+    diagnosis: "Myocardial infarction (heart attack) — a blocked coronary artery causing death of heart muscle.",
+    clueLinks: [
+      "Crushing chest pain radiating to arm/jaw during exertion is classic cardiac pain.",
+      "Risk factors (smoking, hypertension, high cholesterol, family history) make coronary disease likely.",
+      "ST elevation on EKG plus a very high troponin confirm injured, dying heart muscle.",
+    ],
+    alternatives: [
+      { dx: "Heartburn / GERD", why: "Would not raise troponin or cause ST elevation." },
+      { dx: "Muscle strain", why: "Does not radiate to the jaw or release cardiac enzymes." },
+    ],
+    management: [
+      "Restore blood flow quickly (medications or a catheter procedure).",
+      "Oxygen, aspirin, and clot-related medicines (education only).",
+      "Long-term risk-factor control: stop smoking, manage cholesterol and blood pressure.",
+    ],
+    misconceptions: [
+      { think: "A heart attack always means the heart stops.", address: "It means muscle is dying from blocked flow; the heart may still beat, sometimes abnormally." },
+      { think: "Chest pain is always heartburn.", address: "Radiation to arm/jaw, sweating, and abnormal EKG/enzymes distinguish cardiac pain." },
+      { think: "Only the elderly get heart attacks.", address: "Risk factors like smoking can cause them earlier." },
+    ],
+  },
+  {
+    aliases: ["diabetes", "diabetes mellitus", "type 1 diabetes", "diabetic ketoacidosis", "dka"],
+    condition: "Diabetes mellitus (Type 1, presenting with DKA)",
+    system: "Endocrine",
+    learningGoals: [
+      "Explain how insulin lets cells take in glucose.",
+      "Predict what happens to metabolism when insulin is absent.",
+      "Interpret blood glucose, ketones, and blood pH together.",
+    ],
+    patient: { age: "13-year-old", background: "previously healthy student", setting: "clinic after two weeks of feeling increasingly tired and thirsty" },
+    chiefComplaint: "Extreme thirst, frequent urination, weight loss, and now nausea and rapid breathing.",
+    symptoms: [
+      "Very thirsty and drinking constantly",
+      "Urinating frequently, including at night",
+      "Unintended weight loss despite a normal appetite",
+      "Tiredness and now nausea",
+      "Fast, deep breathing with a fruity breath odor",
+    ],
+    curiosity: [
+      "The student is losing weight even though they are eating and drinking a lot.",
+      "Their breath smells oddly sweet or fruity.",
+    ],
+    vitals: [
+      { label: "Heart rate", value: "118 bpm", normal: "60–100 bpm", abnormal: true },
+      { label: "Respiratory rate", value: "28 breaths/min (deep)", normal: "12–20 breaths/min", abnormal: true },
+      { label: "Blood pressure", value: "100/64 mmHg", normal: "≈110/70 mmHg", abnormal: true },
+      { label: "Temperature", value: "37.0 °C", normal: "36.5–37.5 °C", abnormal: false },
+    ],
+    history: [
+      "No prior chronic illness.",
+      "Recent viral cold a few weeks ago.",
+      "An aunt has an autoimmune thyroid condition.",
+    ],
+    exposures: ["No unusual diet changes; symptoms developed on their own over two weeks."],
+    exam: [
+      "Dry lips and mouth (dehydrated).",
+      "Deep, rapid breathing (Kussmaul breathing).",
+      "Fruity odor on the breath.",
+    ],
+    distractor: "Frequent urination and thirst might look like simply drinking too much fluid or a urinary infection, but the weight loss, high glucose, and ketones point to a metabolic cause.",
+    labs: [
+      { label: "Blood glucose", value: "420 mg/dL", normal: "70–110 mg/dL (fasting)", abnormal: true },
+      { label: "Urine ketones", value: "Large", normal: "Negative", abnormal: true },
+      { label: "Blood pH", value: "7.21", normal: "7.35–7.45", abnormal: true },
+      { label: "Hemoglobin A1c", value: "11.8%", normal: "<5.7%", abnormal: true },
+    ],
+    mechanism: {
+      focus: "Pancreatic beta cells, insulin, and whole-body glucose metabolism.",
+      explanation: "Insulin is the hormone that acts like a key, letting glucose move from the blood into cells for energy. In Type 1 diabetes, the immune system destroys the insulin-producing beta cells of the pancreas. Without insulin, glucose piles up in the blood (high blood glucose) but cannot get into cells, so the body acts as if it is starving. The kidneys dump excess glucose into the urine, pulling water with it (frequent urination and thirst). Cells, unable to use glucose, break down fat for fuel, producing acidic ketones. The buildup of ketones lowers blood pH (diabetic ketoacidosis), and the lungs try to blow off acid with deep, rapid breathing.",
+      vocab: [
+        { term: "Insulin", def: "A hormone from the pancreas that lets cells take in glucose." },
+        { term: "Beta cells", def: "Pancreatic cells that make insulin." },
+        { term: "Ketones", def: "Acidic molecules made when the body burns fat for fuel." },
+        { term: "Ketoacidosis", def: "Dangerous drop in blood pH from too many ketones." },
+        { term: "Hemoglobin A1c", def: "A measure of average blood glucose over ~3 months." },
+      ],
+      task: "Make a flow chart starting at 'no insulin' and branch to high blood glucose, urination/thirst, fat breakdown, and ketoacidosis. Connect each branch to a symptom.",
+    },
+    diagnosis: "Type 1 diabetes mellitus presenting as diabetic ketoacidosis — insulin loss causing high blood glucose and acidic ketones.",
+    clueLinks: [
+      "Thirst, frequent urination, and weight loss point to glucose spilling into urine and cells starving.",
+      "Fruity breath and deep breathing suggest the body is making and blowing off acid (ketones).",
+      "Very high glucose, large ketones, low pH, and high A1c confirm uncontrolled diabetes.",
+    ],
+    alternatives: [
+      { dx: "Urinary tract infection", why: "Would not cause high blood glucose, ketones, or weight loss." },
+      { dx: "Simple dehydration", why: "Does not explain the very high glucose and acidic ketones." },
+    ],
+    management: [
+      "Fluids to rehydrate and insulin to restore glucose use (education only).",
+      "Correct electrolytes and monitor blood pH.",
+      "Lifelong insulin and glucose monitoring after recovery.",
+    ],
+    misconceptions: [
+      { think: "Diabetes is only caused by eating too much sugar.", address: "Type 1 is autoimmune destruction of beta cells, not a diet problem." },
+      { think: "High blood sugar means cells have plenty of energy.", address: "Without insulin, glucose cannot enter cells, so they starve despite high blood levels." },
+      { think: "Fruity breath is harmless.", address: "It signals ketoacidosis, a medical emergency." },
+    ],
+  },
+  {
+    aliases: ["anemia", "iron deficiency anemia", "iron-deficiency anemia"],
+    condition: "Iron-deficiency anemia",
+    system: "Cardiovascular",
+    learningGoals: [
+      "Explain how red blood cells and hemoglobin carry oxygen.",
+      "Describe how iron is needed to build hemoglobin.",
+      "Interpret a CBC to identify anemia.",
+    ],
+    patient: { age: "16-year-old", background: "vegetarian student athlete who reports heavy menstrual periods", setting: "clinic for ongoing tiredness affecting schoolwork and sports" },
+    chiefComplaint: "Several months of fatigue, dizziness when standing, and getting winded easily.",
+    symptoms: [
+      "Constant tiredness",
+      "Pale skin and inside of eyelids",
+      "Shortness of breath with mild exercise",
+      "Dizziness when standing up",
+      "Cold hands and feet",
+    ],
+    curiosity: [
+      "The patient eats little iron-rich food and has heavy periods.",
+      "They look unusually pale, especially the lining of the lower eyelids.",
+    ],
+    vitals: [
+      { label: "Heart rate", value: "102 bpm", normal: "60–100 bpm", abnormal: true },
+      { label: "Blood pressure", value: "108/68 mmHg", normal: "≈110/70 mmHg", abnormal: false },
+      { label: "Oxygen saturation", value: "98%", normal: "95–100%", abnormal: false },
+      { label: "Respiratory rate", value: "18 breaths/min", normal: "12–20 breaths/min", abnormal: false },
+    ],
+    history: [
+      "Vegetarian diet, low in iron-rich foods.",
+      "Heavy menstrual periods.",
+      "No bleeding from the gut, no dark stools.",
+    ],
+    exposures: ["No toxins; gradual onset over months."],
+    exam: [
+      "Pale conjunctiva (inside of eyelids) and nail beds.",
+      "Heart rate a bit fast; no murmurs.",
+    ],
+    distractor: "Tiredness and feeling winded could suggest being out of shape or anxious, but the pallor and CBC point to a problem carrying oxygen in the blood.",
+    labs: [
+      { label: "Hemoglobin", value: "8.9 g/dL", normal: "12–16 g/dL", abnormal: true },
+      { label: "Mean corpuscular volume (MCV)", value: "72 fL (small cells)", normal: "80–100 fL", abnormal: true },
+      { label: "Serum ferritin", value: "6 ng/mL", normal: "20–200 ng/mL", abnormal: true },
+      { label: "Oxygen saturation", value: "98%", normal: "95–100%", abnormal: false },
+    ],
+    mechanism: {
+      focus: "Red blood cells, hemoglobin, and oxygen transport.",
+      explanation: "Red blood cells carry oxygen using hemoglobin, a protein that needs iron to bind oxygen. When iron is low — from low dietary intake plus blood loss — the body cannot build enough normal hemoglobin, so red blood cells are fewer and smaller (low MCV). With less hemoglobin, the blood carries less oxygen even though the lungs work fine and SpO₂ looks normal (the oximeter reads the oxygen on the hemoglobin that IS there). Tissues get less oxygen, so the heart beats faster to compensate, and the patient feels tired, breathless, and dizzy. Low ferritin confirms the body's iron stores are empty.",
+      vocab: [
+        { term: "Hemoglobin", def: "The iron-containing protein in red blood cells that carries oxygen." },
+        { term: "Ferritin", def: "A protein that stores iron; low ferritin means low iron stores." },
+        { term: "MCV", def: "Average size of red blood cells; small cells suggest iron deficiency." },
+        { term: "Anemia", def: "Too little hemoglobin or too few red cells to carry oxygen well." },
+      ],
+      task: "Draw a red blood cell and label hemoglobin and iron. Explain why SpO₂ can be normal while the body still gets too little oxygen.",
+    },
+    diagnosis: "Iron-deficiency anemia — too little iron to build hemoglobin, reducing oxygen-carrying capacity.",
+    clueLinks: [
+      "Fatigue, pallor, and a fast heart rate suggest low oxygen delivery.",
+      "Low-iron diet plus heavy periods explains iron loss.",
+      "Low hemoglobin, small cells (low MCV), and very low ferritin confirm iron deficiency.",
+    ],
+    alternatives: [
+      { dx: "Being out of shape / overtraining", why: "Would not lower hemoglobin or ferritin." },
+      { dx: "Lung disease", why: "SpO₂ and breathing rate are normal; the problem is oxygen carrying, not lung function." },
+    ],
+    management: [
+      "Iron-rich foods and iron supplements (education only).",
+      "Address the cause of blood loss.",
+      "Recheck CBC to confirm recovery.",
+    ],
+    misconceptions: [
+      { think: "Normal oxygen saturation rules out an oxygen problem.", address: "SpO₂ measures saturation of existing hemoglobin, not how much hemoglobin there is." },
+      { think: "Anemia just means 'tired'.", address: "It specifically means reduced oxygen-carrying capacity of the blood." },
+      { think: "Only iron pills matter.", address: "You also have to find and fix the source of iron loss." },
+    ],
+  },
+  {
+    aliases: ["pulmonary embolism", "pe", "blood clot in lung", "pulmonary embolus"],
+    condition: "Pulmonary embolism",
+    system: "Respiratory",
+    learningGoals: [
+      "Trace blood flow from the legs to the lungs.",
+      "Explain how a clot blocks pulmonary blood flow and gas exchange.",
+      "Connect a leg clot (DVT) to sudden lung symptoms.",
+    ],
+    patient: { age: "24-year-old", background: "college student recovering from knee surgery, recently on a long flight, taking oral contraceptives", setting: "urgent care with sudden shortness of breath" },
+    chiefComplaint: "Sudden shortness of breath and sharp chest pain that worsens with a deep breath.",
+    symptoms: [
+      "Sudden shortness of breath",
+      "Sharp chest pain when breathing in",
+      "Fast heartbeat",
+      "Coughing, with a little blood-tinged sputum",
+      "Swollen, tender right calf",
+    ],
+    curiosity: [
+      "The symptoms started suddenly at rest, not during exertion.",
+      "One calf is swollen and sore while the other is normal.",
+    ],
+    vitals: [
+      { label: "Heart rate", value: "118 bpm", normal: "60–100 bpm", abnormal: true },
+      { label: "Respiratory rate", value: "26 breaths/min", normal: "12–20 breaths/min", abnormal: true },
+      { label: "Oxygen saturation", value: "89%", normal: "95–100%", abnormal: true },
+      { label: "Blood pressure", value: "118/76 mmHg", normal: "≈120/80 mmHg", abnormal: false },
+    ],
+    history: [
+      "Knee surgery three weeks ago with limited walking.",
+      "Recent 10-hour flight.",
+      "Takes oral contraceptive pills.",
+    ],
+    exposures: ["Prolonged immobility (surgery + long flight) — a clot risk."],
+    exam: [
+      "Breathing fast; lungs mostly clear.",
+      "Right calf swollen, warm, and tender.",
+    ],
+    distractor: "Sharp chest pain with breathing might suggest a pulled muscle or anxiety, but the low oxygen, swollen calf, and risk factors point to a clot.",
+    labs: [
+      { label: "Oxygen saturation", value: "89%", normal: "95–100%", abnormal: true },
+      { label: "D-dimer", value: "3,200 ng/mL", normal: "<500 ng/mL", abnormal: true },
+      { label: "CT pulmonary angiogram", value: "Clot blocking a branch of the right pulmonary artery", normal: "No filling defect", abnormal: true },
+    ],
+    mechanism: {
+      focus: "Pulmonary circulation and gas exchange in the lungs.",
+      explanation: "Blood returning from the body, including the legs, travels through the right heart to the lungs to pick up oxygen. If a clot forms in a deep leg vein (deep vein thrombosis), a piece can break off, travel through the heart, and lodge in a pulmonary artery (embolism). The blocked vessel means part of the lung still gets air but no blood flow, so that air cannot be used for gas exchange — a ventilation–perfusion mismatch. Oxygen levels fall, the patient breathes faster, and the heart races to push blood past the blockage. Immobility, surgery, and hormones raised this patient's clotting risk.",
+      vocab: [
+        { term: "Pulmonary artery", def: "Vessel carrying blood from the heart to the lungs." },
+        { term: "Deep vein thrombosis (DVT)", def: "A blood clot in a deep vein, often in the leg." },
+        { term: "Embolism", def: "A clot that travels and blocks a vessel elsewhere." },
+        { term: "Ventilation–perfusion mismatch", def: "Air reaching lung areas that have no blood flow, so gas exchange fails." },
+        { term: "D-dimer", def: "A blood marker that rises when clots form and break down." },
+      ],
+      task: "Trace the path of a clot from the calf to the lung with arrows. Mark where gas exchange fails and explain the low oxygen.",
+    },
+    diagnosis: "Pulmonary embolism — a clot from a leg vein blocking blood flow in the lungs.",
+    clueLinks: [
+      "Sudden shortness of breath and pleuritic chest pain suggest a lung vessel problem.",
+      "Swollen tender calf plus immobility and hormone use point to a clot source (DVT).",
+      "Low oxygen, very high D-dimer, and CT showing a clot confirm the embolism.",
+    ],
+    alternatives: [
+      { dx: "Muscle strain / costochondritis", why: "Would not lower oxygen or raise D-dimer, and does not explain the swollen calf." },
+      { dx: "Panic attack", why: "Does not cause a swollen calf, low SpO₂, or a clot on CT." },
+    ],
+    management: [
+      "Blood thinners to stop the clot from growing (education only).",
+      "Oxygen and monitoring.",
+      "Address risk factors (mobility, hormones) going forward.",
+    ],
+    misconceptions: [
+      { think: "Chest pain that hurts to breathe is always musculoskeletal.", address: "PE can cause pleuritic pain; check oxygen and risk factors." },
+      { think: "A leg problem and a lung problem must be unrelated.", address: "A leg clot can travel to the lungs — that is the whole mechanism." },
+      { think: "Young, healthy people cannot get clots.", address: "Surgery, immobility, and hormones raise clot risk at any age." },
+    ],
+  },
+  {
+    aliases: ["meningitis", "bacterial meningitis"],
+    condition: "Bacterial meningitis",
+    system: "Nervous",
+    learningGoals: [
+      "Describe the meninges and cerebrospinal fluid (CSF).",
+      "Explain how infection and inflammation of the meninges cause symptoms.",
+      "Interpret CSF analysis to distinguish bacterial infection.",
+    ],
+    patient: { age: "19-year-old", background: "college freshman living in a dormitory", setting: "ER after one day of rapidly worsening headache and fever" },
+    chiefComplaint: "Severe headache, high fever, stiff neck, and sensitivity to light.",
+    symptoms: [
+      "Severe headache",
+      "High fever and chills",
+      "Stiff, painful neck",
+      "Sensitivity to bright light",
+      "Nausea and drowsiness",
+    ],
+    curiosity: [
+      "The neck is so stiff the patient cannot touch chin to chest.",
+      "Symptoms went from mild to severe in under a day.",
+    ],
+    vitals: [
+      { label: "Temperature", value: "39.6 °C", normal: "36.5–37.5 °C", abnormal: true },
+      { label: "Heart rate", value: "115 bpm", normal: "60–100 bpm", abnormal: true },
+      { label: "Blood pressure", value: "128/82 mmHg", normal: "≈120/80 mmHg", abnormal: false },
+      { label: "Respiratory rate", value: "22 breaths/min", normal: "12–20 breaths/min", abnormal: true },
+    ],
+    history: [
+      "Lives in a crowded dormitory.",
+      "Was not up to date on the meningococcal vaccine.",
+      "A few classmates had recent colds.",
+    ],
+    exposures: ["Close-quarters dorm living — easier spread of respiratory bacteria."],
+    exam: [
+      "Stiff neck (resists flexion).",
+      "Photophobia (light hurts the eyes).",
+      "A few small purple spots on the skin.",
+    ],
+    distractor: "Headache and fever could look like a bad case of the flu, but the stiff neck, photophobia, and CSF results point to the meninges.",
+    labs: [
+      { label: "CSF appearance", value: "Cloudy", normal: "Clear", abnormal: true },
+      { label: "CSF white blood cells", value: "2,400 cells/µL (mostly neutrophils)", normal: "0–5 cells/µL", abnormal: true },
+      { label: "CSF glucose", value: "28 mg/dL", normal: "45–80 mg/dL", abnormal: true },
+      { label: "CSF protein", value: "180 mg/dL", normal: "15–45 mg/dL", abnormal: true },
+    ],
+    mechanism: {
+      focus: "The meninges, cerebrospinal fluid, and the central nervous system.",
+      explanation: "The brain and spinal cord are wrapped in protective membranes called the meninges and bathed in cerebrospinal fluid (CSF). In bacterial meningitis, bacteria infect this space, and the immune system floods it with white blood cells, causing inflammation. The swelling and irritation of the meninges produce a pounding headache, a painfully stiff neck, and sensitivity to light. The bacteria and immune cells consume glucose (so CSF glucose drops), while inflammation raises CSF protein and white cells, making the fluid cloudy. Rising pressure and inflammation in this enclosed space make the illness a true emergency.",
+      vocab: [
+        { term: "Meninges", def: "The protective membranes around the brain and spinal cord." },
+        { term: "Cerebrospinal fluid (CSF)", def: "The fluid that cushions the brain and spinal cord." },
+        { term: "Photophobia", def: "Pain or discomfort from light." },
+        { term: "Neutrophils", def: "White blood cells that respond quickly to bacterial infection." },
+        { term: "Lumbar puncture", def: "A spinal tap used to sample CSF." },
+      ],
+      task: "Draw the layers of the meninges around the spinal cord. Show where infection occurs and explain why CSF glucose falls while white cells and protein rise.",
+    },
+    diagnosis: "Bacterial meningitis — infection and inflammation of the meninges around the brain and spinal cord.",
+    clueLinks: [
+      "Headache, fever, stiff neck, and photophobia point to irritated meninges.",
+      "Dorm living and missed vaccine raise exposure risk.",
+      "Cloudy CSF with high neutrophils, low glucose, and high protein confirms bacterial infection.",
+    ],
+    alternatives: [
+      { dx: "Influenza", why: "Does not cause a stiff neck, photophobia, or abnormal CSF." },
+      { dx: "Viral meningitis", why: "Usually milder, with clear CSF, normal glucose, and lymphocytes rather than neutrophils." },
+    ],
+    management: [
+      "Urgent antibiotics (education only).",
+      "Supportive care and monitoring for pressure changes.",
+      "Vaccination and prophylaxis for close contacts.",
+    ],
+    misconceptions: [
+      { think: "It's just a bad flu.", address: "Stiff neck, photophobia, and CSF findings separate meningitis from flu." },
+      { think: "All meningitis is the same.", address: "Bacterial and viral meningitis differ in CSF findings and urgency." },
+      { think: "A normal blood test rules it out.", address: "Diagnosis relies on CSF analysis from a lumbar puncture." },
+    ],
+  },
+  {
+    aliases: ["hypothyroidism", "underactive thyroid", "hashimoto", "hashimoto's"],
+    condition: "Hypothyroidism",
+    system: "Endocrine",
+    learningGoals: [
+      "Describe the thyroid gland and its hormones.",
+      "Explain the hypothalamus–pituitary–thyroid feedback loop.",
+      "Interpret TSH and T4 levels together.",
+    ],
+    patient: { age: "16-year-old", background: "student whose grades and energy have slipped over several months", setting: "clinic for fatigue, weight gain, and feeling cold" },
+    chiefComplaint: "Months of tiredness, weight gain, constipation, dry skin, and always feeling cold.",
+    symptoms: [
+      "Persistent fatigue and sluggishness",
+      "Weight gain without eating more",
+      "Feeling cold when others are comfortable",
+      "Dry skin and brittle hair",
+      "Constipation and slow thinking",
+    ],
+    curiosity: [
+      "Symptoms developed slowly over months and were easy to miss.",
+      "The patient feels cold in a warm room.",
+    ],
+    vitals: [
+      { label: "Heart rate", value: "54 bpm", normal: "60–100 bpm", abnormal: true },
+      { label: "Temperature", value: "36.2 °C", normal: "36.5–37.5 °C", abnormal: true },
+      { label: "Blood pressure", value: "108/72 mmHg", normal: "≈120/80 mmHg", abnormal: false },
+      { label: "Respiratory rate", value: "14 breaths/min", normal: "12–20 breaths/min", abnormal: false },
+    ],
+    history: [
+      "An older sister has an autoimmune thyroid condition.",
+      "No recent illness or medication changes.",
+    ],
+    exposures: ["Gradual, spontaneous onset over months."],
+    exam: [
+      "Slow heart rate; dry, cool skin.",
+      "Slightly puffy face; slow, delayed reflexes.",
+    ],
+    distractor: "Tiredness and low grades might be blamed on stress or poor sleep, but the slow heart rate, cold intolerance, and labs point to the thyroid.",
+    labs: [
+      { label: "TSH (thyroid-stimulating hormone)", value: "14.5 mIU/L", normal: "0.4–4.0 mIU/L", abnormal: true },
+      { label: "Free T4", value: "0.5 ng/dL", normal: "0.8–1.8 ng/dL", abnormal: true },
+      { label: "Thyroid peroxidase antibodies", value: "Positive (high)", normal: "Negative", abnormal: true },
+    ],
+    mechanism: {
+      focus: "The thyroid gland and the hypothalamus–pituitary–thyroid feedback loop.",
+      explanation: "Thyroid hormones (mainly T4 and T3) set the body's metabolic rate. The hypothalamus and pituitary regulate the thyroid: the pituitary releases TSH to tell the thyroid to make hormone, and rising thyroid hormone normally feeds back to lower TSH. In hypothyroidism — often from autoimmune attack on the thyroid — the gland cannot make enough T4. With low thyroid hormone, metabolism slows: the patient feels cold, gains weight, moves and thinks slowly, and the heart beats slower. Because thyroid hormone is low, the negative feedback loop is weak, so the pituitary keeps pumping out TSH — which is why TSH is HIGH while T4 is LOW.",
+      vocab: [
+        { term: "Thyroid hormone (T4/T3)", def: "Hormones that set the body's metabolic rate." },
+        { term: "TSH", def: "Pituitary hormone that tells the thyroid to make hormone." },
+        { term: "Negative feedback", def: "A loop where the output (T4) turns down its own signal (TSH)." },
+        { term: "Metabolic rate", def: "How fast the body uses energy." },
+        { term: "Autoimmune", def: "When the immune system attacks the body's own tissue." },
+      ],
+      task: "Draw the hypothalamus–pituitary–thyroid loop with arrows. Show why low T4 leads to HIGH TSH, and connect slow metabolism to each symptom.",
+    },
+    diagnosis: "Hypothyroidism (often autoimmune) — too little thyroid hormone slowing metabolism.",
+    clueLinks: [
+      "Cold intolerance, weight gain, fatigue, and slow heart rate suggest a low metabolic rate.",
+      "Family history of autoimmune thyroid disease raises suspicion.",
+      "High TSH with low free T4 (and positive antibodies) confirms an underactive, autoimmune thyroid.",
+    ],
+    alternatives: [
+      { dx: "Depression / stress", why: "Would not lower heart rate and temperature or produce high TSH and low T4." },
+      { dx: "Iron-deficiency anemia", why: "Causes fatigue too, but not cold intolerance with a high TSH and low T4." },
+    ],
+    management: [
+      "Daily thyroid hormone replacement (education only).",
+      "Recheck TSH to adjust the dose.",
+      "Monitor for related autoimmune conditions.",
+    ],
+    misconceptions: [
+      { think: "High TSH means an overactive thyroid.", address: "High TSH here means the pituitary is pushing a failing thyroid; T4 is low." },
+      { think: "Weight gain is just from eating too much.", address: "A slow metabolism from low thyroid hormone is the driver here." },
+      { think: "Feeling tired is always stress.", address: "The lab pattern and cold intolerance point to a hormone problem." },
+    ],
+  },
+];
+
+/* ============================================================
+   GENERATION ENGINE
+   generateCase(form) -> structured case object consumed by all views.
+   Difficulty & length modifiers applied here. Generic fallback for
+   any free-text condition. Swap in a real LLM at the marked boundary.
+   ============================================================ */
+function normalize(s) {
+  return (s || "").toLowerCase().trim().replace(/[’']/g, "'").replace(/\s+/g, " ");
+}
+
+function findCondition(conditionText) {
+  const n = normalize(conditionText);
+  if (!n) return null;
+  // exact alias match first
+  for (const c of CONDITIONS) {
+    if (c.aliases.some((a) => normalize(a) === n)) return c;
+  }
+  // partial/contains match
+  for (const c of CONDITIONS) {
+    if (c.aliases.some((a) => n.includes(normalize(a)) || normalize(a).includes(n))) return c;
+  }
+  return null;
+}
+
+function estTimeFromLength(length) {
+  return length === "Full-class case" ? "Full class period (~50 minutes)" : "About 20 minutes";
+}
+
+// Build the generic fallback case for any unknown condition.
+function buildGenericSpec(form) {
+  const cond = form.condition || "the condition";
+  const system = form.system || "Multiple systems";
+  return {
+    condition: form.condition || "Unknown condition",
+    system,
+    learningGoals: [
+      `Connect the patient's symptoms to the ${system.toLowerCase()} system.`,
+      `Explain the normal structure and function involved before reasoning about what goes wrong in ${cond}.`,
+      "Use evidence and lab data to support a diagnosis.",
+    ],
+    patient: { age: "16-year-old", background: "previously healthy honors student", setting: `clinic visit after symptoms that point toward the ${system.toLowerCase()} system` },
+    chiefComplaint: `A combination of symptoms that gradually raise concern about the ${system.toLowerCase()} system.`,
+    symptoms: [
+      `A main symptom commonly seen in ${cond}`,
+      "A second related symptom",
+      "Fatigue or discomfort that affects daily activity",
+      "A change the patient or family noticed recently",
+    ],
+    curiosity: [
+      "The symptoms do not point to one obvious cause at first.",
+      "Something about the pattern invites students to ask more questions.",
+    ],
+    vitals: [
+      { label: "Heart rate", value: "—", normal: "60–100 bpm", abnormal: false },
+      { label: "Blood pressure", value: "—", normal: "≈120/80 mmHg", abnormal: false },
+      { label: "Respiratory rate", value: "—", normal: "12–20 breaths/min", abnormal: false },
+      { label: "Temperature", value: "—", normal: "36.5–37.5 °C", abnormal: false },
+    ],
+    history: [
+      "Relevant past health information.",
+      "Family history if appropriate.",
+      "Recent illness, activity, diet, or exposure.",
+    ],
+    exposures: ["Any recent exposure, activity, or change worth noting."],
+    exam: [
+      `A physical exam finding that fits the ${system.toLowerCase()} system.`,
+      "A second supporting finding.",
+    ],
+    distractor: "Include one finding that could point to a different, simpler explanation, then show why the rest of the evidence does not fit it.",
+    labs: [
+      { label: "Relevant test 1", value: "abnormal value", normal: "normal range", abnormal: true },
+      { label: "Relevant test 2", value: "value", normal: "normal range", abnormal: true },
+      { label: "Supporting test 3", value: "value", normal: "normal range", abnormal: false },
+    ],
+    mechanism: {
+      focus: `The tissue, organ, or pathway of the ${system.toLowerCase()} system most affected by ${cond}.`,
+      explanation: `Explain the normal function of the affected ${system.toLowerCase()} structure, then describe precisely what ${cond} disrupts and how that disruption produces each of the patient's symptoms. Connect the change at the tissue or cellular level to what the patient feels and to the abnormal lab values.`,
+      vocab: [
+        { term: "Key structure", def: "Define the main anatomical structure involved." },
+        { term: "Key process", def: "Define the physiological process being disrupted." },
+        { term: "Key marker", def: "Define an important lab value or sign." },
+      ],
+      task: `Draw or model the affected ${system.toLowerCase()} structure and annotate where ${cond} disrupts normal function.`,
+    },
+    diagnosis: `${cond} affecting the ${system.toLowerCase()} system.`,
+    clueLinks: [
+      "Early symptoms suggested the affected system.",
+      "History and exam narrowed the possibilities.",
+      "Lab data confirmed the diagnosis and ruled out alternatives.",
+    ],
+    alternatives: [
+      { dx: "A common look-alike condition", why: "Does not match part of the evidence." },
+      { dx: "A second plausible alternative", why: "Ruled out by a specific lab or finding." },
+    ],
+    management: [
+      "General, education-only overview of how this condition is typically managed.",
+      "Supportive care relevant to the affected system.",
+    ],
+    misconceptions: [
+      { think: "Students may name the disease without explaining why.", address: "Require a mechanism-based justification using the evidence." },
+      { think: "Students may fixate on the distractor clue.", address: "Have them weigh ALL evidence, not a single finding." },
+      { think: "Students may ignore normal values.", address: "Normal results are also evidence and help rule things out." },
+    ],
+  };
+}
+
+function applyDifficulty(spec, difficulty) {
+  // Returns a shallow-adjusted copy: number of labs shown, guidance, vocab depth.
+  const out = { ...spec, labs: [...spec.labs], mechanism: { ...spec.mechanism, vocab: [...spec.mechanism.vocab] } };
+  if (difficulty === "Introductory") {
+    // fewer values, keep the clearest abnormal ones; more vocab support
+    const abnormal = out.labs.filter((l) => l.abnormal);
+    const some = abnormal.length ? abnormal.slice(0, 3) : out.labs.slice(0, 3);
+    out.labs = some;
+    out.difficultyNote = "Introductory: more obvious symptoms, fewer lab values, extra vocabulary support, and a clear link to the body system. Use the guided questions closely.";
+  } else if (difficulty === "Challenge") {
+    out.labs = out.labs.slice(0, 6);
+    out.difficultyNote = "Challenge: subtler clues and realistic ambiguity. Students must interpret the data carefully and actively rule out the alternative diagnoses before committing.";
+    out.ruleOutEmphasis = true;
+  } else {
+    out.labs = out.labs.slice(0, 5);
+    out.difficultyNote = "Standard: moderate complexity with 3–5 key data points and some distractor information. Students interpret the evidence with light guidance.";
+  }
+  // Cap vocab to 5-10 (spec)
+  if (out.mechanism.vocab.length > 8) out.mechanism.vocab = out.mechanism.vocab.slice(0, 8);
+  return out;
+}
+
+function pacingPlan(length) {
+  if (length === "Full-class case") {
+    return [
+      "Part I — The Initial Mystery: 5–8 minutes",
+      "Part II — History & Physical Exam: 8–10 minutes",
+      "Part III — Lab Data & Diagnostics: 10–15 minutes",
+      "Part IV — Mechanism Clue: 10–15 minutes",
+      "Diagnosis Reveal & Discussion: 10 minutes",
+      "Exit ticket: 5 minutes",
+    ];
+  }
+  return [
+    "Part I — The Initial Mystery: 3 minutes",
+    "Part II — History & Physical Exam: 4 minutes",
+    "Part III — Lab Data & Diagnostics: 5 minutes",
+    "Part IV — Mechanism Clue: 5 minutes",
+    "Diagnosis Reveal & Synthesis: 3 minutes",
+  ];
+}
+
+function rolesForFormat(format) {
+  if (format === "Whole class discussion") return ROLES_WHOLE_CLASS;
+  if (format === "Individual") {
+    return [
+      { name: "Investigator (you)", desc: "work through each clue, record your reasoning, and revise your hypothesis as evidence builds" },
+    ];
+  }
+  return ROLES_SMALL_GROUP;
+}
+
+// MAIN ENTRY POINT
+function generateCase(form) {
+  // === AI HOOK BOUNDARY ===========================================
+  // To use a real AI API later, replace the lines below with a call
+  // that builds a prompt from `form`, requests JSON, and parses it
+  // into the SAME shape returned here (meta, parts, teacherGuide,
+  // collaboration, exitTicket). The rest of the app needs no changes.
+  //   const data = await callLLM(buildPrompt(form));
+  //   return shapeCase(data, form);
+  // ================================================================
+  const matched = findCondition(form.condition);
+  const baseSpec = matched ? { ...matched } : buildGenericSpec(form);
+  // If a known condition was matched, prefer the teacher's body-system choice label
+  // but keep the authored content. Difficulty trims data.
+  const spec = applyDifficulty(baseSpec, form.difficulty);
+
+  const meta = {
+    condition: spec.condition,
+    system: form.system || spec.system,
+    difficulty: form.difficulty,
+    format: form.format,
+    length: form.length,
+    estTime: estTimeFromLength(form.length),
+    learningGoals: spec.learningGoals,
+    isSample: !!form.isSample,
+    matched: !!matched,
+  };
+
+  const parts = {
+    I: {
+      title: "Part I — The Initial Mystery",
+      patient: spec.patient,
+      chiefComplaint: spec.chiefComplaint,
+      symptoms: spec.symptoms,
+      curiosity: spec.curiosity,
+      questions: STUDENT_QUESTIONS.I,
+    },
+    II: {
+      title: "Part II — History and Physical Exam",
+      vitals: spec.vitals,
+      history: spec.history,
+      exposures: spec.exposures,
+      exam: spec.exam,
+      distractor: spec.distractor,
+      questions: STUDENT_QUESTIONS.II,
+    },
+    III: {
+      title: "Part III — Lab Data and Diagnostic Testing",
+      labs: spec.labs,
+      questions: STUDENT_QUESTIONS.III,
+    },
+    IV: {
+      title: "Part IV — Mechanism Clue",
+      mechanism: spec.mechanism,
+      questions: STUDENT_QUESTIONS.IV,
+    },
+    V: {
+      title: "Part V — Diagnosis Reveal and Synthesis",
+      diagnosis: spec.diagnosis,
+      clueLinks: spec.clueLinks,
+      alternatives: spec.alternatives,
+      management: spec.management,
+      questions: STUDENT_QUESTIONS.V,
+    },
+  };
+
+  const teacherGuide = {
+    overview: {
+      condition: spec.condition,
+      system: meta.system,
+      estTime: meta.estTime,
+      difficulty: form.difficulty,
+      difficultyNote: spec.difficultyNote,
+      learningGoals: spec.learningGoals,
+    },
+    answerKey: [
+      {
+        part: "Part I — Initial Mystery",
+        keyClues: spec.symptoms.slice(0, 3),
+        notice: "Students should list the standout symptoms and propose which body systems could be involved.",
+        hypotheses: "Expect broad, reasonable guesses; do not confirm or deny yet.",
+        guide: "Push for 2–3 possible explanations and what information they want next.",
+        watch: "Jumping to the final diagnosis with no evidence.",
+      },
+      {
+        part: "Part II — History & Exam",
+        keyClues: [...spec.history.slice(0, 2), ...spec.exam.slice(0, 1)],
+        notice: "Risk factors, exposures, and exam findings that support or challenge early ideas.",
+        hypotheses: "Hypotheses should narrow; the distractor may tempt some groups.",
+        guide: "Ask which clues support vs challenge their hypothesis. Name the distractor explicitly: " + spec.distractor,
+        watch: "Latching onto the distractor clue and ignoring the rest of the evidence.",
+      },
+      {
+        part: "Part III — Lab Data",
+        keyClues: spec.labs.filter((l) => l.abnormal).map((l) => `${l.label}: ${l.value} (normal ${l.normal})`),
+        notice: "Which values are abnormal versus normal, and what each abnormal value implies.",
+        hypotheses: "The diagnosis should now be strongly favored by most groups.",
+        guide: "Have students state what process appears disrupted and why, using the numbers.",
+        watch: "Ignoring normal values (they are evidence too) or being overwhelmed by numbers.",
+      },
+      {
+        part: "Part IV — Mechanism",
+        keyClues: [spec.mechanism.focus],
+        notice: "The normal function being disrupted and how that explains the symptoms and labs.",
+        hypotheses: "Students should now be able to defend one diagnosis on mechanism grounds.",
+        guide: "Require a mechanism explanation, not just a disease name. Use the model/diagram task.",
+        watch: "Naming the disease without explaining the underlying physiology.",
+      },
+    ],
+    reasoning: [
+      {
+        clue: "Clue 1: Initial symptoms",
+        think: "Students may think: " + (spec.curiosity[0] || "several systems could be involved."),
+        suggests: "What this clue actually suggests: a starting set of body systems to consider — " + spec.symptoms.slice(0, 2).join("; ") + ".",
+        uncertain: "What remains uncertain: the specific cause; multiple explanations are still open.",
+      },
+      {
+        clue: "Clue 2: History and exam",
+        think: "Students may think: the history points to one obvious cause (watch the distractor).",
+        suggests: "What this clue actually suggests: risk factors and exam findings that narrow the list — " + spec.exam.slice(0, 2).join("; ") + ".",
+        uncertain: "What remains uncertain: confirmation requires data; the distractor still needs to be ruled out.",
+      },
+      {
+        clue: "Clue 3: Lab data",
+        think: "Students may think: the abnormal numbers point somewhere — they must say where.",
+        suggests: "What this clue actually suggests: " + (spec.labs.filter((l) => l.abnormal)[0] ? `${spec.labs.filter((l) => l.abnormal)[0].label} is abnormal, indicating the disrupted process.` : "the disrupted process."),
+        uncertain: "What remains uncertain: the underlying mechanism — addressed in Part IV.",
+      },
+      {
+        clue: "Clue 4: Mechanism",
+        understand: "What students should now understand: " + spec.mechanism.focus + " — " + spec.mechanism.explanation.slice(0, 240) + "…",
+        finalDx: "Final diagnosis: " + spec.diagnosis,
+      },
+    ],
+    vocabulary: spec.mechanism.vocab,
+    misconceptions: spec.misconceptions,
+    differentiation: {
+      support: [
+        "Provide a word bank of the key vocabulary terms.",
+        "Offer a partially completed evidence board to start.",
+        "Use the guided student questions one at a time.",
+      ],
+      challenge: [
+        "Ask students to rank the evidence by strength.",
+        "Require them to rule out BOTH alternative diagnoses with specific evidence.",
+        "Have them predict what would happen if the condition worsened.",
+      ],
+      sentenceStarters: SENTENCE_STARTERS,
+    },
+    pacing: pacingPlan(form.length),
+  };
+
+  const collaboration = {
+    roles: rolesForFormat(form.format),
+    format: form.format,
+    discussionPrompts: DISCUSSION_PROMPTS,
+    evidenceSeed: [
+      { clue: "Part I symptoms", know: spec.symptoms.slice(0, 2).join("; "), means: "", diagnosis: "", confidence: "Low", questions: "What system is involved?" },
+      { clue: "Part II history/exam", know: spec.exam.slice(0, 1).join("; "), means: "", diagnosis: "", confidence: "Low", questions: "Does this fit our hypothesis?" },
+    ],
+    hypothesisSeed: [
+      { dx: spec.alternatives[0] ? spec.alternatives[0].dx : "Possible diagnosis", for: "", against: "", confidence: "Low" },
+    ],
+  };
+
+  const exitTicket = [
+    `In 2–3 sentences, name the most likely diagnosis for ${spec.condition.replace(/\s*\(.*\)/, "")} and the single strongest piece of evidence for it.`,
+    "Explain the mechanism: what normal function was disrupted, and how did that cause the symptoms?",
+    "Name one alternative diagnosis you ruled out and why.",
+  ];
+
+  return { meta, parts, teacherGuide, collaboration, exitTicket };
+}
+
+/* ============================================================
+   PLAIN-TEXT EXPORTERS (copy / reveal slides)
+   ============================================================ */
+function qList(qs) { return qs.map((q, i) => `   ${i + 1}. ${q}`).join("\n"); }
+
+function studentCaseText(c) {
+  const p = c.parts;
+  const lines = [];
+  lines.push(`MYSTERY CASE STUDY — STUDENT VERSION`);
+  lines.push(`Body system: ${c.meta.system} | Difficulty: ${c.meta.difficulty} | ${c.meta.estTime}`);
+  lines.push(`(For classroom education only — not medical advice.)`);
+  lines.push("");
+  lines.push(p.I.title);
+  lines.push(`Patient: ${p.I.patient.age}, ${p.I.patient.background}.`);
+  lines.push(`Setting: ${p.I.patient.setting}.`);
+  lines.push(`Chief complaint: ${p.I.chiefComplaint}`);
+  lines.push("Symptoms:");
+  p.I.symptoms.forEach((s) => lines.push(`  - ${s}`));
+  lines.push("Curious details:");
+  p.I.curiosity.forEach((s) => lines.push(`  - ${s}`));
+  lines.push("Discussion questions:");
+  lines.push(qList(p.I.questions));
+  lines.push("");
+  lines.push(p.II.title);
+  lines.push("Vital signs:");
+  p.II.vitals.forEach((v) => lines.push(`  - ${v.label}: ${v.value} (normal ${v.normal})${v.abnormal ? "  [ABNORMAL]" : ""}`));
+  lines.push("History:");
+  p.II.history.forEach((h) => lines.push(`  - ${h}`));
+  lines.push("Recent exposures/activity:");
+  p.II.exposures.forEach((h) => lines.push(`  - ${h}`));
+  lines.push("Physical exam:");
+  p.II.exam.forEach((h) => lines.push(`  - ${h}`));
+  lines.push(`Consider carefully: ${p.II.distractor}`);
+  lines.push("Discussion questions:");
+  lines.push(qList(p.II.questions));
+  lines.push("");
+  lines.push(p.III.title);
+  lines.push("Lab & diagnostic data:");
+  p.III.labs.forEach((l) => lines.push(`  - ${l.label}: ${l.value} (normal ${l.normal})${l.abnormal ? "  [ABNORMAL]" : "  [normal]"}`));
+  lines.push("Discussion questions:");
+  lines.push(qList(p.III.questions));
+  lines.push("");
+  lines.push(p.IV.title);
+  lines.push(`Focus: ${p.IV.mechanism.focus}`);
+  lines.push(p.IV.mechanism.explanation);
+  lines.push("Vocabulary:");
+  p.IV.mechanism.vocab.forEach((v) => lines.push(`  - ${v.term}: ${v.def}`));
+  lines.push(`Task: ${p.IV.mechanism.task}`);
+  lines.push("Discussion questions:");
+  lines.push(qList(p.IV.questions));
+  lines.push("");
+  lines.push(p.V.title + "  (DIAGNOSIS — reveal last)");
+  lines.push(`Final diagnosis: ${p.V.diagnosis}`);
+  lines.push("How the clues pointed here:");
+  p.V.clueLinks.forEach((s) => lines.push(`  - ${s}`));
+  lines.push("Why alternatives are less likely:");
+  p.V.alternatives.forEach((a) => lines.push(`  - ${a.dx}: ${a.why}`));
+  lines.push("Management (education only):");
+  p.V.management.forEach((m) => lines.push(`  - ${m}`));
+  lines.push("Synthesis questions:");
+  lines.push(qList(p.V.questions));
+  return lines.join("\n");
+}
+
+function teacherGuideText(c) {
+  const g = c.teacherGuide;
+  const lines = [];
+  lines.push("TEACHER GUIDE — ANSWER KEY (do not distribute to students)");
+  lines.push("");
+  lines.push("CASE OVERVIEW");
+  lines.push(`  Condition: ${g.overview.condition}`);
+  lines.push(`  Body system: ${g.overview.system}`);
+  lines.push(`  Estimated time: ${g.overview.estTime}`);
+  lines.push(`  Difficulty: ${g.overview.difficulty}`);
+  if (g.overview.difficultyNote) lines.push(`  Note: ${g.overview.difficultyNote}`);
+  lines.push("  Learning goals:");
+  g.overview.learningGoals.forEach((x) => lines.push(`    - ${x}`));
+  lines.push("");
+  lines.push("ANSWER KEY BY PART");
+  g.answerKey.forEach((a) => {
+    lines.push(`  ${a.part}`);
+    lines.push(`    Key clues: ${Array.isArray(a.keyClues) ? a.keyClues.join("; ") : a.keyClues}`);
+    lines.push(`    Students should notice: ${a.notice}`);
+    lines.push(`    Likely hypotheses: ${a.hypotheses}`);
+    lines.push(`    How to guide: ${a.guide}`);
+    lines.push(`    Misconceptions to watch: ${a.watch}`);
+  });
+  lines.push("");
+  lines.push("REASONING PATHWAY");
+  g.reasoning.forEach((r) => {
+    lines.push(`  ${r.clue}`);
+    if (r.think) lines.push(`    ${r.think}`);
+    if (r.suggests) lines.push(`    ${r.suggests}`);
+    if (r.uncertain) lines.push(`    ${r.uncertain}`);
+    if (r.understand) lines.push(`    ${r.understand}`);
+    if (r.finalDx) lines.push(`    ${r.finalDx}`);
+  });
+  lines.push("");
+  lines.push("VOCABULARY SUPPORT");
+  g.vocabulary.forEach((v) => lines.push(`  - ${v.term}: ${v.def}`));
+  lines.push("");
+  lines.push("COMMON MISCONCEPTIONS");
+  g.misconceptions.forEach((m) => lines.push(`  - Misconception: ${m.think}\n    Address: ${m.address}`));
+  lines.push("");
+  lines.push("DIFFERENTIATION");
+  lines.push("  Support:");
+  g.differentiation.support.forEach((x) => lines.push(`    - ${x}`));
+  lines.push("  Challenge extension:");
+  g.differentiation.challenge.forEach((x) => lines.push(`    - ${x}`));
+  lines.push("  Sentence starters:");
+  g.differentiation.sentenceStarters.forEach((x) => lines.push(`    - ${x}`));
+  lines.push("");
+  lines.push("PACING PLAN");
+  g.pacing.forEach((x) => lines.push(`  - ${x}`));
+  lines.push("");
+  lines.push("EXIT TICKET");
+  c.exitTicket.forEach((x, i) => lines.push(`  ${i + 1}. ${x}`));
+  return lines.join("\n");
+}
+
+function revealSlidesText(c) {
+  const p = c.parts;
+  const slides = [];
+  slides.push(`SLIDE — Clue 1 of 5: The Initial Mystery\nPatient: ${p.I.patient.age}, ${p.I.patient.background}.\nSetting: ${p.I.patient.setting}.\nChief complaint: ${p.I.chiefComplaint}\nSymptoms: ${p.I.symptoms.join("; ")}\nDiscuss: ${p.I.questions.join(" / ")}\nCurrent hypothesis: ______________________`);
+  slides.push(`SLIDE — Clue 2 of 5: History & Exam\nVitals: ${p.II.vitals.map((v) => `${v.label} ${v.value}${v.abnormal ? "*" : ""}`).join("; ")}\nHistory/exposures: ${[...p.II.history, ...p.II.exposures].join("; ")}\nExam: ${p.II.exam.join("; ")}\nDiscuss: ${p.II.questions.join(" / ")}\nCurrent hypothesis: ______________________`);
+  slides.push(`SLIDE — Clue 3 of 5: Lab Data\n${p.III.labs.map((l) => `${l.label}: ${l.value} (normal ${l.normal})${l.abnormal ? " *ABNORMAL*" : ""}`).join("\n")}\nDiscuss: ${p.III.questions.join(" / ")}\nCurrent hypothesis: ______________________`);
+  slides.push(`SLIDE — Clue 4 of 5: Mechanism\nFocus: ${p.IV.mechanism.focus}\n${p.IV.mechanism.explanation}\nDiscuss: ${p.IV.questions.join(" / ")}\nCurrent hypothesis: ______________________`);
+  slides.push(`SLIDE — Diagnosis Reveal\nDiagnosis: ${p.V.diagnosis}\nWhy: ${p.V.clueLinks.join("; ")}\nLess likely: ${p.V.alternatives.map((a) => `${a.dx} (${a.why})`).join(" | ")}\nSynthesis: ${p.V.questions.join(" / ")}`);
+  return slides.join("\n\n----------------------------------------\n\n");
+}
+
+/* ============================================================
+   PRESENTATIONAL COMPONENTS
+   ============================================================ */
+function QuestionList({ questions, label }) {
+  return (
+    <div className="questions">
+      <div className="eyebrow">{label || "Student discussion questions"}</div>
+      <ol>{questions.map((q, i) => <li key={i}>{q}</li>)}</ol>
+    </div>
+  );
+}
+
+function LabTable({ labs }) {
+  return (
+    <table className="labs">
+      <thead>
+        <tr><th>Test</th><th>Result</th><th>Normal range</th><th>Flag</th></tr>
+      </thead>
+      <tbody>
+        {labs.map((l, i) => (
+          <tr key={i} className={l.abnormal ? "abnormal" : ""}>
+            <td>{l.label}</td>
+            <td>{l.value}</td>
+            <td>{l.normal}</td>
+            <td>{l.abnormal ? <span className="flag">Abnormal</span> : <span className="flag normal">Normal</span>}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function StudentCase({ c, showDiagnosis, setShowDiagnosis }) {
+  const p = c.parts;
+  return (
+    <div className="student-scope">
+      <div className="card">
+        <div className="eyebrow">Student Case</div>
+        <h2>A Clinical Mystery</h2>
+        <div className="meta-pills">
+          <span className="pill">{c.meta.system}</span>
+          <span className="pill">{c.meta.difficulty}</span>
+          <span className="pill">{c.meta.format}</span>
+          <span className="pill">{c.meta.estTime}</span>
+        </div>
+        <p className="small">Work through each part in order. The diagnosis stays hidden until Part V.</p>
+      </div>
+
+      <div className="card">
+        <h2>{p.I.title}</h2>
+        <p><strong>Patient:</strong> {p.I.patient.age}, {p.I.patient.background}.</p>
+        <p><strong>Setting:</strong> {p.I.patient.setting}.</p>
+        <p><strong>Chief complaint:</strong> {p.I.chiefComplaint}</p>
+        <h4>Symptoms</h4>
+        <ul className="clean">{p.I.symptoms.map((s, i) => <li key={i}>{s}</li>)}</ul>
+        <h4>Curious details</h4>
+        <ul className="clean">{p.I.curiosity.map((s, i) => <li key={i}>{s}</li>)}</ul>
+        <QuestionList questions={p.I.questions} />
+      </div>
+
+      <div className="card">
+        <h2>{p.II.title}</h2>
+        <h4>Vital signs</h4>
+        <LabTable labs={p.II.vitals} />
+        <h4>Relevant history</h4>
+        <ul className="clean">{p.II.history.map((s, i) => <li key={i}>{s}</li>)}</ul>
+        <h4>Recent illness / exposure / activity</h4>
+        <ul className="clean">{p.II.exposures.map((s, i) => <li key={i}>{s}</li>)}</ul>
+        <h4>Physical exam</h4>
+        <ul className="clean">{p.II.exam.map((s, i) => <li key={i}>{s}</li>)}</ul>
+        <div className="distractor"><strong>Consider carefully:</strong> {p.II.distractor}</div>
+        <QuestionList questions={p.II.questions} />
+      </div>
+
+      <div className="card">
+        <h2>{p.III.title}</h2>
+        <p className="small">Normal ranges are shown. Abnormal values are flagged.</p>
+        <LabTable labs={p.III.labs} />
+        <QuestionList questions={p.III.questions} />
+      </div>
+
+      <div className="card">
+        <h2>{p.IV.title}</h2>
+        <p><strong>Focus:</strong> {p.IV.mechanism.focus}</p>
+        <p>{p.IV.mechanism.explanation}</p>
+        <h4>Vocabulary support</h4>
+        <dl className="vocab">
+          {p.IV.mechanism.vocab.map((v, i) => (
+            <React.Fragment key={i}><dt>{v.term}</dt><dd>{v.def}</dd></React.Fragment>
+          ))}
+        </dl>
+        <div className="pause-box"><div className="eyebrow">Model / explain task</div>{p.IV.mechanism.task}</div>
+        <QuestionList questions={p.IV.questions} />
+      </div>
+
+      <div className="card">
+        <h2>{p.V.title}</h2>
+        {!showDiagnosis ? (
+          <div className="reveal-locked">
+            <p>The diagnosis is hidden. Make your group's final hypothesis first.</p>
+            <button className="btn btn-primary btn-lg no-print" onClick={() => setShowDiagnosis(true)}>Reveal Diagnosis</button>
+          </div>
+        ) : (
+          <div>
+            <h3>Final diagnosis</h3>
+            <p><strong>{p.V.diagnosis}</strong></p>
+            <h4>How each clue pointed here</h4>
+            <ul className="clean">{p.V.clueLinks.map((s, i) => <li key={i}>{s}</li>)}</ul>
+            <h4>Why alternatives are less likely</h4>
+            <ul className="clean">{p.V.alternatives.map((a, i) => <li key={i}><strong>{a.dx}:</strong> {a.why}</li>)}</ul>
+            <h4>Management overview (education only)</h4>
+            <ul className="clean">{p.V.management.map((m, i) => <li key={i}>{m}</li>)}</ul>
+            <QuestionList questions={p.V.questions} label="Final synthesis questions" />
+            <button className="btn no-print" style={{ marginTop: 12 }} onClick={() => setShowDiagnosis(false)}>Hide diagnosis again</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TeacherGuide({ c }) {
+  const g = c.teacherGuide;
+  return (
+    <div className="teacher-scope">
+      <div className="card">
+        <span className="teacher-badge">Teacher Only</span>
+        <h2>Teacher Guide</h2>
+        <h3>Case Overview</h3>
+        <ul className="clean">
+          <li><strong>Condition:</strong> {g.overview.condition}</li>
+          <li><strong>Body system:</strong> {g.overview.system}</li>
+          <li><strong>Estimated time:</strong> {g.overview.estTime}</li>
+          <li><strong>Difficulty:</strong> {g.overview.difficulty}</li>
+        </ul>
+        {g.overview.difficultyNote && <p className="small">{g.overview.difficultyNote}</p>}
+        <h4>Learning goals</h4>
+        <ul className="clean">{g.overview.learningGoals.map((x, i) => <li key={i}>{x}</li>)}</ul>
+      </div>
+
+      <div className="card">
+        <span className="teacher-badge">Teacher Only</span>
+        <h2>Answer Key</h2>
+        {g.answerKey.map((a, i) => (
+          <div key={i}>
+            <h3>{a.part}</h3>
+            <ul className="clean">
+              <li><strong>Key clues:</strong> {Array.isArray(a.keyClues) ? a.keyClues.join("; ") : a.keyClues}</li>
+              <li><strong>Students should notice:</strong> {a.notice}</li>
+              <li><strong>Likely student hypotheses:</strong> {a.hypotheses}</li>
+              <li><strong>How to guide discussion:</strong> {a.guide}</li>
+              <li><strong>Misconceptions to watch:</strong> {a.watch}</li>
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <span className="teacher-badge">Teacher Only</span>
+        <h2>Reasoning Pathway</h2>
+        {g.reasoning.map((r, i) => (
+          <div key={i}>
+            <h3>{r.clue}</h3>
+            {r.think && <p>{r.think}</p>}
+            {r.suggests && <p>{r.suggests}</p>}
+            {r.uncertain && <p>{r.uncertain}</p>}
+            {r.understand && <p>{r.understand}</p>}
+            {r.finalDx && <p><strong>{r.finalDx}</strong></p>}
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <span className="teacher-badge">Teacher Only</span>
+        <h2>Vocabulary Support</h2>
+        <dl className="vocab">
+          {g.vocabulary.map((v, i) => (
+            <React.Fragment key={i}><dt>{v.term}</dt><dd>{v.def}</dd></React.Fragment>
+          ))}
+        </dl>
+      </div>
+
+      <div className="card">
+        <span className="teacher-badge">Teacher Only</span>
+        <h2>Common Misconceptions</h2>
+        {g.misconceptions.map((m, i) => (
+          <div key={i}>
+            <p><strong>Misconception:</strong> {m.think}</p>
+            <p><strong>How to address:</strong> {m.address}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <span className="teacher-badge">Teacher Only</span>
+        <h2>Differentiation</h2>
+        <h4>Support for students who need help</h4>
+        <ul className="clean">{g.differentiation.support.map((x, i) => <li key={i}>{x}</li>)}</ul>
+        <h4>Challenge extension</h4>
+        <ul className="clean">{g.differentiation.challenge.map((x, i) => <li key={i}>{x}</li>)}</ul>
+        <h4>Sentence starters for evidence-based discussion</h4>
+        <ul className="clean">{g.differentiation.sentenceStarters.map((x, i) => <li key={i}>{x}</li>)}</ul>
+      </div>
+
+      <div className="card">
+        <span className="teacher-badge">Teacher Only</span>
+        <h2>Pacing Plan</h2>
+        <ul className="clean">{g.pacing.map((x, i) => <li key={i}>{x}</li>)}</ul>
+      </div>
+
+      <div className="card">
+        <span className="teacher-badge">Teacher Only</span>
+        <h2>Exit Ticket</h2>
+        <ol>{c.exitTicket.map((x, i) => <li key={i}>{x}</li>)}</ol>
+      </div>
+    </div>
+  );
+}
+
+const REVEAL_STEPS = ["Clue 1 of 5", "Clue 2 of 5", "Clue 3 of 5", "Clue 4 of 5", "Diagnosis Reveal"];
+
+function RevealMode({ c, step, setStep, showNotes, setShowNotes }) {
+  const p = c.parts;
+  const g = c.teacherGuide;
+  const notesByStep = [
+    g.answerKey[0], g.answerKey[1], g.answerKey[2], g.answerKey[3], null,
+  ];
+  const note = notesByStep[step];
+
+  function body() {
+    if (step === 0) {
+      return (
+        <div className="reveal-body">
+          <p><strong>Patient:</strong> {p.I.patient.age}, {p.I.patient.background}.</p>
+          <p><strong>Setting:</strong> {p.I.patient.setting}.</p>
+          <p><strong>Chief complaint:</strong> {p.I.chiefComplaint}</p>
+          <ul className="clean">{p.I.symptoms.map((s, i) => <li key={i}>{s}</li>)}</ul>
+          <QuestionList questions={p.I.questions} />
+        </div>
+      );
+    }
+    if (step === 1) {
+      return (
+        <div className="reveal-body">
+          <LabTable labs={p.II.vitals} />
+          <h4>History & exposures</h4>
+          <ul className="clean">{[...p.II.history, ...p.II.exposures].map((s, i) => <li key={i}>{s}</li>)}</ul>
+          <h4>Exam</h4>
+          <ul className="clean">{p.II.exam.map((s, i) => <li key={i}>{s}</li>)}</ul>
+          <QuestionList questions={p.II.questions} />
+        </div>
+      );
+    }
+    if (step === 2) {
+      return (
+        <div className="reveal-body">
+          <LabTable labs={p.III.labs} />
+          <QuestionList questions={p.III.questions} />
+        </div>
+      );
+    }
+    if (step === 3) {
+      return (
+        <div className="reveal-body">
+          <p><strong>Focus:</strong> {p.IV.mechanism.focus}</p>
+          <p>{p.IV.mechanism.explanation}</p>
+          <QuestionList questions={p.IV.questions} />
+        </div>
+      );
+    }
+    return (
+      <div className="reveal-body">
+        <h3>Diagnosis</h3>
+        <p><strong>{p.V.diagnosis}</strong></p>
+        <h4>How the clues pointed here</h4>
+        <ul className="clean">{p.V.clueLinks.map((s, i) => <li key={i}>{s}</li>)}</ul>
+        <QuestionList questions={p.V.questions} label="Synthesis questions" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="reveal-wrap">
+      <div className="progress-track no-print">
+        {REVEAL_STEPS.map((label, i) => (
+          <div key={i} className={"progress-step " + (i === step ? "active" : i < step ? "done" : "")}>{label}</div>
+        ))}
+      </div>
+
+      <div className="card reveal-card">
+        <div className="eyebrow">{REVEAL_STEPS[step]}</div>
+        <h2>{step < 4 ? REVEAL_STEPS[step] : "Diagnosis Reveal"}</h2>
+        {body()}
+
+        {step < 4 && (
+          <div className="pause-box">
+            <div className="eyebrow">Pause and Discuss</div>
+            Talk it out as a group before revealing the next clue. What does this new information change?
+          </div>
+        )}
+        <div className="hypothesis-prompt">
+          <strong>Current hypothesis:</strong> What is your group's best diagnosis right now, and how confident are you (Low / Medium / High)?
+        </div>
+
+        {showNotes && note && (
+          <div className="teacher-notes">
+            <span className="teacher-badge">Teacher Notes</span>
+            <ul className="clean">
+              <li><strong>Key clues:</strong> {Array.isArray(note.keyClues) ? note.keyClues.join("; ") : note.keyClues}</li>
+              <li><strong>Guide:</strong> {note.guide}</li>
+              <li><strong>Watch for:</strong> {note.watch}</li>
+            </ul>
+          </div>
+        )}
+        {showNotes && step === 4 && (
+          <div className="teacher-notes">
+            <span className="teacher-badge">Teacher Notes</span>
+            <p>Have students defend the diagnosis with at least three pieces of evidence and explain the mechanism in their own words.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="reveal-nav no-print">
+        <button className="btn" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>← Go Back</button>
+        {step < 4 ? (
+          <button className="btn btn-primary btn-lg" onClick={() => setStep(Math.min(4, step + 1))}>Reveal Next Clue →</button>
+        ) : (
+          <button className="btn btn-primary btn-lg" disabled>Case Complete</button>
+        )}
+        <button className="btn" onClick={() => setStep(0)}>↺ Restart Case</button>
+        <button className="btn btn-ghost" onClick={() => setShowNotes(!showNotes)}>{showNotes ? "Hide" : "Show"} Teacher Notes</button>
+      </div>
+    </div>
+  );
+}
+
+function EvidenceBoard({ rows, setRows }) {
+  function update(i, field, val) {
+    const next = rows.map((r, idx) => (idx === i ? { ...r, [field]: val } : r));
+    setRows(next);
+  }
+  function addRow() {
+    setRows([...rows, { clue: "", know: "", means: "", diagnosis: "", confidence: "Low", questions: "" }]);
+  }
+  function removeRow(i) { setRows(rows.filter((_, idx) => idx !== i)); }
+  return (
+    <div>
+      <table className="editable-table">
+        <thead>
+          <tr>
+            <th>Clue</th><th>What we know</th><th>What it means</th><th>Possible diagnosis</th><th>Confidence</th><th>Open questions</th><th className="no-print"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i}>
+              <td><textarea value={r.clue} onChange={(e) => update(i, "clue", e.target.value)} /></td>
+              <td><textarea value={r.know} onChange={(e) => update(i, "know", e.target.value)} /></td>
+              <td><textarea value={r.means} onChange={(e) => update(i, "means", e.target.value)} /></td>
+              <td><textarea value={r.diagnosis} onChange={(e) => update(i, "diagnosis", e.target.value)} /></td>
+              <td>
+                <select value={r.confidence} onChange={(e) => update(i, "confidence", e.target.value)}>
+                  <option>Low</option><option>Medium</option><option>High</option>
+                </select>
+              </td>
+              <td><textarea value={r.questions} onChange={(e) => update(i, "questions", e.target.value)} /></td>
+              <td className="no-print"><button className="row-x" title="Delete row" onClick={() => removeRow(i)}>×</button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="btn-row no-print"><button className="btn" onClick={addRow}>+ Add row</button></div>
+    </div>
+  );
+}
+
+function HypothesisTracker({ rows, setRows }) {
+  function update(i, field, val) {
+    setRows(rows.map((r, idx) => (idx === i ? { ...r, [field]: val } : r)));
+  }
+  function addRow() { setRows([...rows, { dx: "", for: "", against: "", confidence: "Low" }]); }
+  function removeRow(i) { setRows(rows.filter((_, idx) => idx !== i)); }
+  return (
+    <div>
+      <table className="editable-table">
+        <thead>
+          <tr><th>Diagnosis possibility</th><th>Evidence for</th><th>Evidence against</th><th>Confidence</th><th className="no-print"></th></tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i}>
+              <td><textarea value={r.dx} onChange={(e) => update(i, "dx", e.target.value)} /></td>
+              <td><textarea value={r.for} onChange={(e) => update(i, "for", e.target.value)} /></td>
+              <td><textarea value={r.against} onChange={(e) => update(i, "against", e.target.value)} /></td>
+              <td>
+                <select value={r.confidence} onChange={(e) => update(i, "confidence", e.target.value)}>
+                  <option>Low</option><option>Medium</option><option>High</option>
+                </select>
+              </td>
+              <td className="no-print"><button className="row-x" title="Delete row" onClick={() => removeRow(i)}>×</button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="btn-row no-print"><button className="btn" onClick={addRow}>+ Add diagnosis</button></div>
+    </div>
+  );
+}
+
+function CollaborationMode({ c, evidence, setEvidence, hypotheses, setHypotheses }) {
+  const col = c.collaboration;
+  return (
+    <div>
+      <div className="card">
+        <h2>Collaboration Mode</h2>
+        <p className="small">Roles below are tuned for: <strong>{col.format}</strong></p>
+        <h3>Student Roles</h3>
+        {col.roles.map((r, i) => (
+          <div className="role-card" key={i}><strong>{r.name}:</strong> {r.desc}</div>
+        ))}
+      </div>
+
+      <div className="card">
+        <h2>Evidence Board</h2>
+        <p className="small">Organize clues as they are revealed. Editable in the browser.</p>
+        <EvidenceBoard rows={evidence} setRows={setEvidence} />
+      </div>
+
+      <div className="card">
+        <h2>Hypothesis Tracker</h2>
+        <p className="small">Add possible diagnoses and update confidence as clues are revealed.</p>
+        <HypothesisTracker rows={hypotheses} setRows={setHypotheses} />
+      </div>
+
+      <div className="card">
+        <h2>Discussion Prompts</h2>
+        <ul className="clean">{col.discussionPrompts.map((d, i) => <li key={i}>{d}</li>)}</ul>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   FORM + CONTROLS
+   ============================================================ */
+const DIFFICULTIES = ["Introductory", "Standard", "Challenge"];
+const FORMATS = ["Individual", "Small group", "Whole class discussion"];
+const LENGTHS = ["20-minute short case", "Full-class case"];
+
+function TeacherForm({ form, setForm, onGenerate }) {
+  function set(field, val) { setForm({ ...form, [field]: val }); }
+  return (
+    <div className="card no-print">
+      <div className="eyebrow">Teacher Input</div>
+      <h2>Build a Case</h2>
+      <div className="form-grid">
+        <div className="field full">
+          <label htmlFor="condition">Disease or condition</label>
+          <input id="condition" value={form.condition} placeholder="e.g. Asthma, Myocardial infarction, Cyanide poisoning"
+            onChange={(e) => set("condition", e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="system">Body system</label>
+          <select id="system" value={form.system} onChange={(e) => set("system", e.target.value)}>
+            {BODY_SYSTEMS.map((s) => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="difficulty">Difficulty level</label>
+          <select id="difficulty" value={form.difficulty} onChange={(e) => set("difficulty", e.target.value)}>
+            {DIFFICULTIES.map((s) => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="format">Class format</label>
+          <select id="format" value={form.format} onChange={(e) => set("format", e.target.value)}>
+            {FORMATS.map((s) => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="length">Case length</label>
+          <select id="length" value={form.length} onChange={(e) => set("length", e.target.value)}>
+            {LENGTHS.map((s) => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="btn-row">
+        <button className="btn btn-primary btn-lg" onClick={() => onGenerate(false)}>Generate Case</button>
+        <button className="btn" onClick={() => onGenerate(true)}>Regenerate</button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   ROOT APP
+   ============================================================ */
+const DEFAULT_FORM = {
+  condition: "Cyanide poisoning",
+  system: "Multiple systems",
+  difficulty: "Standard",
+  format: "Small group",
+  length: "20-minute short case",
+};
+const EMPTY_FORM = {
+  condition: "",
+  system: "Cardiovascular",
+  difficulty: "Standard",
+  format: "Small group",
+  length: "20-minute short case",
+};
+const TABS = ["Student Case", "Teacher Guide", "Reveal Mode", "Collaboration Mode"];
+const LS_SAVED = "mcsg_saved_cases_v1";
+const LS_LAST = "mcsg_last_form_v1";
+
+function App() {
+  const [form, setForm] = useState(DEFAULT_FORM);
+  const [generated, setGenerated] = useState(() => generateCase({ ...DEFAULT_FORM, isSample: true }));
+  const [activeTab, setActiveTab] = useState("Student Case");
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
+  const [revealStep, setRevealStep] = useState(0);
+  const [showNotes, setShowNotes] = useState(false);
+  const [evidence, setEvidence] = useState(generated.collaboration.evidenceSeed);
+  const [hypotheses, setHypotheses] = useState(generated.collaboration.hypothesisSeed);
+  const [saved, setSaved] = useState([]);
+  const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem(LS_SAVED) || "[]");
+      if (Array.isArray(s)) setSaved(s);
+      const f = JSON.parse(localStorage.getItem(LS_LAST) || "null");
+      if (f && f.condition) setForm(f);
+    } catch (e) {}
+  }, []);
+
+  function flash(msg) {
+    setToast(msg);
+    window.clearTimeout(flash._t);
+    flash._t = window.setTimeout(() => setToast(""), 1800);
+  }
+
+  function doGenerate() {
+    const c = generateCase(form);
+    setGenerated(c);
+    setShowDiagnosis(false);
+    setRevealStep(0);
+    setShowNotes(false);
+    setEvidence(c.collaboration.evidenceSeed);
+    setHypotheses(c.collaboration.hypothesisSeed);
+    try { localStorage.setItem(LS_LAST, JSON.stringify(form)); } catch (e) {}
+    flash(c.meta.matched ? "Case generated" : "Case generated from template (condition not in library)");
+  }
+
+  async function copyText(text, label) {
+    try {
+      await navigator.clipboard.writeText(text);
+      flash(label + " copied");
+    } catch (e) {
+      // Fallback for environments without clipboard permissions
+      const ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); flash(label + " copied"); }
+      catch (err) { flash("Copy failed — select and copy manually"); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  function resetForm() {
+    setForm(EMPTY_FORM);
+    flash("Form reset");
+  }
+
+  function loadSample() {
+    setForm(DEFAULT_FORM);
+    const c = generateCase({ ...DEFAULT_FORM, isSample: true });
+    setGenerated(c);
+    setShowDiagnosis(false); setRevealStep(0); setShowNotes(false);
+    setEvidence(c.collaboration.evidenceSeed);
+    setHypotheses(c.collaboration.hypothesisSeed);
+    flash("Sample case loaded");
+  }
+
+  function saveCase() {
+    const entry = {
+      id: Date.now(),
+      name: `${generated.meta.condition} — ${generated.meta.difficulty} (${new Date().toLocaleDateString()})`,
+      form,
+    };
+    const next = [entry, ...saved].slice(0, 20);
+    setSaved(next);
+    try { localStorage.setItem(LS_SAVED, JSON.stringify(next)); } catch (e) {}
+    flash("Case saved to this browser");
+  }
+
+  function loadSaved(entry) {
+    setForm(entry.form);
+    const c = generateCase(entry.form);
+    setGenerated(c);
+    setShowDiagnosis(false); setRevealStep(0); setShowNotes(false);
+    setEvidence(c.collaboration.evidenceSeed);
+    setHypotheses(c.collaboration.hypothesisSeed);
+    flash("Loaded: " + entry.name);
+  }
+
+  function deleteSaved(id) {
+    const next = saved.filter((s) => s.id !== id);
+    setSaved(next);
+    try { localStorage.setItem(LS_SAVED, JSON.stringify(next)); } catch (e) {}
+  }
+
+  return (
+    <div className="app">
+      <header className="site-header">
+        <h1>Mystery Case Study Generator</h1>
+        <p className="subtitle">Progressive diagnosis cases for 12th-grade Honors Anatomy &amp; Physiology</p>
+        <div className="disclaimer">For classroom education only. This tool does not provide real medical advice.</div>
+      </header>
+
+      <TeacherForm form={form} setForm={setForm} onGenerate={doGenerate} />
+
+      <div className="card no-print">
+        <div className="eyebrow">Output Controls</div>
+        <div className="btn-row">
+          <button className="btn" onClick={() => copyText(studentCaseText(generated), "Student version")}>Copy Student Version</button>
+          <button className="btn" onClick={() => copyText(teacherGuideText(generated), "Teacher guide")}>Copy Teacher Guide</button>
+          <button className="btn" onClick={() => copyText(revealSlidesText(generated), "Reveal slides text")}>Copy Reveal Slides Text</button>
+          <button className="btn" onClick={() => window.print()}>Print Case</button>
+          <button className="btn" onClick={resetForm}>Reset Form</button>
+          <button className="btn" onClick={loadSample}>Load Sample Case</button>
+        </div>
+        <div className="btn-row">
+          <button className="btn" onClick={saveCase}>Save Case to Browser</button>
+          {saved.length > 0 && <span className="small" style={{ alignSelf: "center" }}>{saved.length} saved case(s):</span>}
+        </div>
+        {saved.length > 0 && (
+          <ul className="saved-list">
+            {saved.map((s) => (
+              <li key={s.id}>
+                <span className="small">{s.name}</span>
+                <span>
+                  <button className="btn btn-small" onClick={() => loadSaved(s)}>Load</button>{" "}
+                  <button className="row-x" title="Delete" onClick={() => deleteSaved(s.id)}>×</button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="tabs no-print">
+        {TABS.map((t) => (
+          <button key={t} className={"tab " + (activeTab === t ? "active" : "")} onClick={() => setActiveTab(t)}>{t}</button>
+        ))}
+      </div>
+
+      {activeTab === "Student Case" && (
+        <StudentCase c={generated} showDiagnosis={showDiagnosis} setShowDiagnosis={setShowDiagnosis} />
+      )}
+      {activeTab === "Teacher Guide" && <TeacherGuide c={generated} />}
+      {activeTab === "Reveal Mode" && (
+        <RevealMode c={generated} step={revealStep} setStep={setRevealStep} showNotes={showNotes} setShowNotes={setShowNotes} />
+      )}
+      {activeTab === "Collaboration Mode" && (
+        <CollaborationMode c={generated} evidence={evidence} setEvidence={setEvidence} hypotheses={hypotheses} setHypotheses={setHypotheses} />
+      )}
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
