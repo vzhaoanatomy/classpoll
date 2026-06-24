@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Dashboard — ClassPolling</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/teacher.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body class="teacher-body">
+  <header class="teacher-header">
+    <div class="header-left">
+      <h1>ClassPolling</h1>
+      <span id="session-code" class="session-badge"></span>
+      <span id="status-badge" class="status-badge waiting">Waiting</span>
+    </div>
+    <div class="header-right">
+      <span id="participant-count" class="participant-count">0 students joined</span>
+    </div>
+  </header>
+
+  <main class="teacher-main">
+    <!-- Left panel: controls -->
+    <aside class="controls-panel">
+      <section class="panel-section">
+        <h2>Join Info</h2>
+        <p class="join-note">
+          <strong>Students on phones:</strong> scan the QR code or open the link below.
+          Teacher and students must be on the <strong>same Wi‑Fi network</strong>.
+        </p>
+        <label class="join-label" for="wifi-ip-input">Wi‑Fi IP override (optional)</label>
+        <div class="join-link-box">
+          <input id="wifi-ip-input" type="text" placeholder="e.g. 192.168.1.23" />
+          <button id="regenerate-btn" class="btn btn-small">Update</button>
+        </div>
+        <p class="join-meta">Leave blank to use this browser's address. Enter your laptop's Wi‑Fi IP so phones can join.</p>
+        <label class="join-label" for="join-link">Student join link</label>
+        <div class="join-link-box">
+          <input id="join-link" readonly />
+          <button id="copy-link-btn" class="btn btn-small">Copy</button>
+        </div>
+        <div class="qr-container">
+          <img id="qr-code" alt="QR code to join session" />
+          <p id="qr-target-url" class="qr-target-url">QR code points to: …</p>
+          <p id="qr-error" class="qr-error hidden"></p>
+        </div>
+        <details class="localhost-details">
+          <summary>Testing on this computer only</summary>
+          <label class="join-label" for="localhost-join-link">Localhost join link</label>
+          <div class="join-link-box">
+            <input id="localhost-join-link" readonly />
+            <button id="copy-localhost-btn" class="btn btn-small">Copy</button>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel-section">
+        <h2>Settings</h2>
+        <label class="toggle-row">
+          <span>Anonymous responses</span>
+          <input type="checkbox" id="anonymous-toggle" checked />
+        </label>
+        <div class="mode-toggle">
+          <label>Response mode</label>
+          <div class="btn-group">
+            <button class="btn btn-toggle active" data-mode="multiple-choice">A/B/C/D</button>
+            <button class="btn btn-toggle" data-mode="text">Text</button>
+          </div>
+        </div>
+        <div id="text-view-toggle" class="mode-toggle hidden">
+          <label>Text display</label>
+          <div class="btn-group">
+            <button class="btn btn-toggle active" data-view="list">List</button>
+            <button class="btn btn-toggle" data-view="wordcloud">Word Cloud</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel-section">
+        <h2>Question</h2>
+        <textarea id="question-input" placeholder="Optional — leave blank if asking verbally" rows="3"></textarea>
+      </section>
+
+      <section class="panel-section controls-section">
+        <h2>Controls</h2>
+        <div class="control-buttons">
+          <button id="start-btn" class="btn btn-success">▶ Start Poll</button>
+          <button id="stop-btn" class="btn btn-warning" disabled>⏸ Stop</button>
+          <button id="reset-btn" class="btn btn-secondary">↺ Reset</button>
+          <button id="end-btn" class="btn btn-danger">✕ End Session</button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Right panel: live results (projector-friendly) -->
+    <section class="results-panel">
+      <div id="question-display" class="question-display">
+        <p class="placeholder">Enter a question and start the poll</p>
+      </div>
+
+      <!-- Multiple choice bar chart -->
+      <div id="mc-results" class="mc-results">
+        <canvas id="bar-chart"></canvas>
+        <div class="mc-labels">
+          <div class="mc-label"><span class="label-letter">A</span><span id="count-a" class="label-count">0</span></div>
+          <div class="mc-label"><span class="label-letter">B</span><span id="count-b" class="label-count">0</span></div>
+          <div class="mc-label"><span class="label-letter">C</span><span id="count-c" class="label-count">0</span></div>
+          <div class="mc-label"><span class="label-letter">D</span><span id="count-d" class="label-count">0</span></div>
+        </div>
+      </div>
+
+      <!-- Text response list -->
+      <div id="text-list-results" class="text-results hidden">
+        <ul id="text-list"></ul>
+      </div>
+
+      <!-- Text response word cloud -->
+      <div id="text-cloud-results" class="text-results hidden">
+        <div id="word-cloud" class="word-cloud"></div>
+      </div>
+
+      <p id="response-count" class="response-count">0 responses</p>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/teacher.js"></script>
+</body>
+</html>

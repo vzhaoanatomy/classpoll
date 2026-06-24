@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Poll — ClassPolling</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="student-body">
+  <!-- Step 1: Name entry (shown when session requires names) -->
+  <main id="join-screen" class="student-card">
+    <h1>Join Poll</h1>
+    <p id="session-info" class="subtitle">Session: <strong id="session-code"></strong></p>
+    <div id="name-form" class="hidden">
+      <label for="name-input">Your name</label>
+      <input id="name-input" type="text" placeholder="Enter your name" autocomplete="name" />
+    </div>
+    <button id="join-btn" class="btn btn-primary btn-large">Join Session</button>
+    <p id="error-msg" class="error-msg hidden"></p>
+  </main>
+
+  <!-- Step 2: Waiting for poll to start -->
+  <main id="waiting-screen" class="student-card hidden">
+    <div class="pulse-dot"></div>
+    <h2>You're in!</h2>
+    <p class="subtitle">Waiting for the teacher to start the poll…</p>
+  </main>
+
+  <!-- Step 3a: Multiple choice response -->
+  <main id="mc-screen" class="student-card hidden">
+    <h2 id="mc-question" class="question-text"></h2>
+    <div class="choice-grid">
+      <button class="choice-btn" data-choice="A">A</button>
+      <button class="choice-btn" data-choice="B">B</button>
+      <button class="choice-btn" data-choice="C">C</button>
+      <button class="choice-btn" data-choice="D">D</button>
+    </div>
+    <p id="mc-submitted" class="submitted-msg hidden">✓ Response submitted!</p>
+  </main>
+
+  <!-- Step 3b: Text response -->
+  <main id="text-screen" class="student-card hidden">
+    <h2 id="text-question" class="question-text"></h2>
+    <textarea id="text-input" placeholder="Type your answer…" rows="4"></textarea>
+    <button id="text-submit-btn" class="btn btn-primary btn-large">Submit</button>
+    <p id="text-submitted" class="submitted-msg hidden">✓ Response submitted!</p>
+  </main>
+
+  <!-- Session ended -->
+  <main id="ended-screen" class="student-card hidden">
+    <h2>Session Ended</h2>
+    <p class="subtitle">The teacher has ended this polling session. Thanks for participating!</p>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/student.js"></script>
+</body>
+</html>

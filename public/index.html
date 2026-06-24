@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClassPolling — Live Classroom Polls</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="landing">
+  <main class="landing-card">
+    <h1>ClassPolling</h1>
+    <p class="subtitle">Run live classroom polls. Students join from their phones.</p>
+    <button id="create-btn" class="btn btn-primary btn-large">Start a New Session</button>
+    <p id="error-msg" class="error-msg hidden"></p>
+  </main>
+  <script>
+    document.getElementById('create-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('create-btn');
+      const errEl = document.getElementById('error-msg');
+      btn.disabled = true;
+      btn.textContent = 'Creating…';
+      errEl.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/sessions', { method: 'POST' });
+        const data = await res.json();
+        window.location.href = `/teacher/${data.sessionId}`;
+      } catch {
+        errEl.textContent = 'Could not create session. Please try again.';
+        errEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Start a New Session';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "class-polling",
+  "version": "1.0.0",
+  "description": "Interactive classroom polling system",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.1"
+  }
+}
