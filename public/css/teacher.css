@@ -50,6 +50,12 @@
 .status-badge.active { background: #dcfce7; color: var(--success); }
 .status-badge.stopped { background: #fef3c7; color: var(--warning); }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .participant-count {
   font-size: .95rem;
   color: var(--text-muted);

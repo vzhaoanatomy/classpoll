@@ -68,6 +68,7 @@ const startBtn = document.getElementById('start-btn');
 const stopBtn = document.getElementById('stop-btn');
 const resetBtn = document.getElementById('reset-btn');
 const endBtn = document.getElementById('end-btn');
+const newSessionBtn = document.getElementById('new-session-btn');
 
 const countEls = {
   A: document.getElementById('count-a'),
@@ -137,6 +138,25 @@ if (endBtn) {
     if (confirm('End this session? All data will be deleted.')) {
       socket.emit('end-session', { sessionId });
       window.location.href = appUrl('');
+    }
+  });
+}
+
+if (newSessionBtn) {
+  newSessionBtn.addEventListener('click', async () => {
+    newSessionBtn.disabled = true;
+    newSessionBtn.textContent = 'Creating…';
+    try {
+      const res = await fetch(appUrl('api/sessions'), { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.sessionId) throw new Error('Failed to create session');
+      console.log('[teacher.js] New session created:', data.sessionId);
+      window.location.href = appUrl(`teacher/${encodeURIComponent(data.sessionId)}`);
+    } catch (err) {
+      console.error('[teacher.js] New session failed:', err);
+      alert('Could not create a new session. Please try again.');
+      newSessionBtn.disabled = false;
+      newSessionBtn.textContent = '+ New Session';
     }
   });
 }
