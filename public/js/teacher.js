@@ -5,6 +5,7 @@
 console.log('[teacher.js] loaded');
 
 const WIFI_IP_KEY = 'classpolling-wifi-ip';
+const LOCAL_PORT = '3000';
 
 // Session code from ?session=CODE or /teacher/CODE
 function getSessionIdFromPath() {
@@ -78,6 +79,26 @@ const countEls = {
 let currentSession = null;
 let barChart = null;
 
+/** Configure join UI for public (Render) vs local development */
+function setupJoinMode() {
+  const joinNote = document.getElementById('join-note');
+  const localSection = document.getElementById('local-network-section');
+  const localhostDetails = document.querySelector('.localhost-details');
+
+  if (window.isPublicDeploy && window.isPublicDeploy()) {
+    console.log('[teacher.js] Public deploy mode — using', window.location.origin);
+    if (joinNote) {
+      joinNote.innerHTML =
+        '<strong>Students anywhere:</strong> scan the QR code or open the link below. ' +
+        'Students can join from <strong>any network</strong> (Wi‑Fi or cellular).';
+    }
+    if (localSection) localSection.classList.add('hidden');
+    if (localhostDetails) localhostDetails.classList.add('hidden');
+    localStorage.removeItem(WIFI_IP_KEY);
+    if (wifiIpInput) wifiIpInput.value = '';
+  }
+}
+
 // --- Control handlers (registered early so they work even if chart/init fails) ---
 
 function joinAsTeacher() {
@@ -136,11 +157,24 @@ function getPort() {
 }
 
 function buildBaseOrigin(wifiIpOverride) {
+  // Public deploy: always use the live site URL (e.g. classpoll.onrender.com)
+  if (window.isPublicDeploy && window.isPublicDeploy() && !(wifiIpOverride || '').trim()) {
+    return window.location.origin;
+  }
+
   const ip = (wifiIpOverride || '').trim();
   if (ip) {
-    return `${window.location.protocol}//${ip}:${getPort()}`;
+    // Local Wi-Fi always uses http on port 3000 — not the page's https/port
+    return `http://${ip}:${LOCAL_PORT}`;
   }
   return window.location.origin;
+}
+
+/** Full student join URL on the public internet */
+function buildPublicJoinUrl() {
+  const origin = window.location.origin.replace(/\/$/, '');
+  const path = appUrl(`join/${encodeURIComponent(sessionId)}`);
+  return `${origin}${path}`;
 }
 
 function buildJoinUrl(baseOrigin) {
@@ -172,10 +206,17 @@ function setQrTargetUrl(url) {
 
 /** Build and set the student join link input (source of truth for QR) */
 function updateStudentJoinLink() {
-  const wifiIp = wifiIpInput.value.trim();
-  localStorage.setItem(WIFI_IP_KEY, wifiIp);
+  const onPublic = window.isPublicDeploy && window.isPublicDeploy();
+  const wifiIp = onPublic ? '' : wifiIpInput.value.trim();
 
-  const joinUrl = buildJoinUrl(buildBaseOrigin(wifiIp));
+  if (!onPublic) {
+    localStorage.setItem(WIFI_IP_KEY, wifiIp);
+  }
+
+  const joinUrl = onPublic
+    ? buildPublicJoinUrl()
+    : buildJoinUrl(buildBaseOrigin(wifiIp));
+
   joinLinkEl.value = joinUrl;
   localhostJoinLinkEl.value = buildLocalhostJoinUrl();
   sessionCodeEl.textContent = sessionId;
@@ -250,22 +291,27 @@ async function updateJoinInfo() {
 
 sessionCodeEl.textContent = sessionId || '—';
 
+setupJoinMode();
+
 async function initJoinInfo() {
-  const savedIp = localStorage.getItem(WIFI_IP_KEY);
-  if (savedIp) {
-    wifiIpInput.value = savedIp;
-  } else {
-    try {
-      const res = await fetch(appUrl('api/network-info'));
-      if (res.ok) {
-        const info = await res.json();
-        if (info.detectedIp) {
-          // Pre-fill detected Wi-Fi IP so QR doesn't default to localhost
-          wifiIpInput.value = info.detectedIp;
+  const onPublic = window.isPublicDeploy && window.isPublicDeploy();
+
+  if (!onPublic) {
+    const savedIp = localStorage.getItem(WIFI_IP_KEY);
+    if (savedIp) {
+      wifiIpInput.value = savedIp;
+    } else {
+      try {
+        const res = await fetch(appUrl('api/network-info'));
+        if (res.ok) {
+          const info = await res.json();
+          if (info.detectedIp) {
+            wifiIpInput.value = info.detectedIp;
+          }
         }
+      } catch (err) {
+        console.warn('[teacher.js] Could not fetch network info:', err);
       }
-    } catch (err) {
-      console.warn('[teacher.js] Could not fetch network info:', err);
     }
   }
 

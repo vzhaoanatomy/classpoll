@@ -34,4 +34,16 @@
   };
 
   window.socketOrigin = window.API_ORIGIN || window.location.origin;
+
+  /** True when hosted online (Render, custom domain) — not local dev */
+  window.isPublicDeploy = function isPublicDeploy() {
+    const h = window.location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1') return false;
+    if (/^10\./.test(h) || /^192\.168\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h)) {
+      return false;
+    }
+    if (h.endsWith('.onrender.com') || h.endsWith('.github.io')) return true;
+    // Custom domain or other public host (not a raw IP)
+    return !/^\d+\.\d+\.\d+\.\d+$/.test(h);
+  };
 })();

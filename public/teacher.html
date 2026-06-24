@@ -27,16 +27,18 @@
     <aside class="controls-panel">
       <section class="panel-section">
         <h2>Join Info</h2>
-        <p class="join-note">
+        <p id="join-note" class="join-note">
           <strong>Students on phones:</strong> scan the QR code or open the link below.
           Teacher and students must be on the <strong>same Wi‑Fi network</strong>.
         </p>
-        <label class="join-label" for="wifi-ip-input">Wi‑Fi IP override (optional)</label>
-        <div class="join-link-box">
-          <input id="wifi-ip-input" type="text" placeholder="e.g. 192.168.1.23" />
-          <button id="regenerate-btn" class="btn btn-small">Update</button>
+        <div id="local-network-section">
+          <label class="join-label" for="wifi-ip-input">Wi‑Fi IP override (local dev only)</label>
+          <div class="join-link-box">
+            <input id="wifi-ip-input" type="text" placeholder="e.g. 192.168.1.23" />
+            <button id="regenerate-btn" class="btn btn-small">Update</button>
+          </div>
+          <p class="join-meta">Only needed when running on your laptop. Leave blank on Render.</p>
         </div>
-        <p class="join-meta">Leave blank to use this browser's address. Enter your laptop's Wi‑Fi IP so phones can join.</p>
         <label class="join-label" for="join-link">Student join link</label>
         <div class="join-link-box">
           <input id="join-link" readonly />
